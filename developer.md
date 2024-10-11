@@ -22,77 +22,90 @@ Ensure you have Node.JS and either npm or yarn:
 ### Initial Setup
 
 1. **Clone the repository:**
-    '''bash
+    '''console
     git clone https://github.com/CjKhaled/roost-frontend.git
+    '''
 
 2. **Navigate to project directory:**
-    '''bash
+    '''console
     cd roost-frontend
+    '''
 
 3. **Install dependencies:"**
-    '''bash
+    '''console
     npm install
+    '''
 
     or
 
-    '''bash
+    '''console
     yarn install
+    '''
 
 4. **Start server:**
-    '''bash
+    '''console
     npm run dev
+    '''
 
     or 
 
-    '''bash
+    '''console
     yarn dev
+    '''
 
 ## Development Workflow
 
 ### Running project
-'''bash
+'''console
 npm run dev
+'''
 
 ### Builgind project
-'''bash
+'''console
 npm run build
+'''
 
 ### Preview build
-'''bash
+'''console
 npm run preview
+'''
 
 ## Project Structure
 roost-frontend/
-├── public/             # Static files (index.html, images, etc.)
-├── src/                # Main source folder
-│   ├── components/     # Reusable components
-│   ├── pages/          # Pages for the app
-│   ├── App.jsx         # Main App component
-│   └── main.jsx        # Entry point for the app
-├── .gitignore          # Files and folders to ignore in git
-├── README.md           # Project documentation
-├── package.json        # Project metadata and dependencies
-├── vite.config.js      # Vite configuration
-└── eslint.config.js    # ESLint configuration
+├── public/             # Static files (index.html, images, etc.) <br>
+├── src/                # Main source folder <br>
+│   ├── components/     # Reusable components <br>
+│   ├── pages/          # Pages for the app <br>
+│   ├── App.jsx         # Main App component <br>
+│   └── main.jsx        # Entry point for the app <br>
+├── .gitignore          # Files and folders to ignore in git <br>
+├── README.md           # Project documentation <br>
+├── package.json        # Project metadata and dependencies <br>
+├── vite.config.js      # Vite configuration <br>
+└── eslint.config.js    # ESLint configuration <br>
 
 ## Code Quality
 Use ESLint to ensure code quality & consistency; configured in **eslint.config.js** file
 
-'''bash
+'''console
 npm run lint
+'''
 
 ## Contributing Guidelines
 1. Fork the repository and clone it to your local machine.
 2. Create a new branch for your feature or bugfix:
-    '''bash
+    '''console
     git checkout -b feature/your-feature-name
+    '''
 3. Write your code
 4. Commit
-    '''bash
+    '''console
     git commit -m "Add feature: your feature"
+    '''
 5. Push
-    '''bash
+    '''console
     git push origin feature/your-feature-name
+    '''
 6. Create PR
 
 ### Pull Request Checklist
