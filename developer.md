@@ -22,53 +22,53 @@ Ensure you have Node.JS and either npm or yarn:
 ### Initial Setup
 
 1. **Clone the repository:**
-    '''console
+    ```console
     git clone https://github.com/CjKhaled/roost-frontend.git
-    '''
+    ```
 
 2. **Navigate to project directory:**
-    '''console
+    ```console
     cd roost-frontend
-    '''
+    ```
 
 3. **Install dependencies:"**
-    '''console
+    ```console
     npm install
-    '''
+    ```
 
     or
 
-    '''console
+    ```console
     yarn install
-    '''
+    ```
 
 4. **Start server:**
-    '''console
+    ```console
     npm run dev
-    '''
+    ```
 
     or 
 
-    '''console
+    ```console
     yarn dev
-    '''
+    ```
 
 ## Development Workflow
 
 ### Running project
-'''console
+```console
 npm run dev
-'''
+```
 
 ### Builgind project
-'''console
+```console
 npm run build
-'''
+```
 
 ### Preview build
-'''console
+```console
 npm run preview
-'''
+```
 
 ## Project Structure
 roost-frontend/
@@ -87,25 +87,25 @@ roost-frontend/
 ## Code Quality
 Use ESLint to ensure code quality & consistency; configured in **eslint.config.js** file
 
-'''console
+```console
 npm run lint
-'''
+```
 
 ## Contributing Guidelines
 1. Fork the repository and clone it to your local machine.
 2. Create a new branch for your feature or bugfix:
-    '''console
+    ```console
     git checkout -b feature/your-feature-name
-    '''
+    ```
 3. Write your code
 4. Commit
-    '''console
+    ```console
     git commit -m "Add feature: your feature"
-    '''
+    ```
 5. Push
-    '''console
+    ```console
     git push origin feature/your-feature-name
-    '''
+    ```
 6. Create PR
 
 ### Pull Request Checklist
