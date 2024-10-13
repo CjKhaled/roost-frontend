@@ -103,10 +103,18 @@ import { css } from "styled-components/macro"; //eslint-disable-line
 import ComponentRenderer from "ComponentRenderer.js";
 import HotelTravelLandingPage from "./demos/HotelTravelLandingPage";
 import ThankYouPage from "ThankYouPage.js";
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import store, { persistor } from './store/store';
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Signup from 'pages/Signup';
 import Login from 'pages/Login';
+import MainLandingPage from 'MainLandingPage';
+import ProfilePage from 'pages/Profile';
+import AboutUs from 'pages/AboutUs';
+import ListingsPage from 'pages/Listings';
+import ListingPage from 'pages/Listing';
 
 export default function App() {
   // If you want to disable the animation just use the disabled `prop` like below on your page's component
@@ -115,17 +123,25 @@ export default function App() {
 
   return (
     <>
-      <GlobalStyles />
-      <Router>
-        <Routes>
-          <Route path="/components/:type/:subtype/:name" element={<ComponentRenderer />} />
-          <Route path="/components/:type/:name" element={<ComponentRenderer />} />
-          <Route path="/thank-you" element={<ThankYouPage />} />
-          <Route path="/" element={<HotelTravelLandingPage />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </Router>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor} >
+          <GlobalStyles />
+          <Router>
+            <Routes>
+              <Route path="/components/:type/:subtype/:name" element={<ComponentRenderer />} />
+              <Route path="/thank-you" element={<ThankYouPage />} />
+              <Route path="/" element={<HotelTravelLandingPage />} />
+              <Route path="/alt" element={<MainLandingPage />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/aboutus" element={<AboutUs />} />
+              <Route path="/listings" element={<ListingsPage />} />
+              <Route path="/listing/:id" element={<ListingPage />} />
+            </Routes>
+          </Router>
+        </PersistGate>
+      </Provider>
     </>
   );
 }

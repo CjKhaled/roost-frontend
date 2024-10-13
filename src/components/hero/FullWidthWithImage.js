@@ -1,9 +1,12 @@
+// \src\components\hero\FullWidthWithImage.js
+
 import React from "react";
 import tw from "twin.macro";
 import styled from "styled-components";
 import { css } from "styled-components/macro"; //eslint-disable-line
 
 import Header, { LogoLink, NavLinks, NavLink as NavLinkBase } from "../headers/light.js";
+import NavLinksCustom from 'components/headers/NavLinksCustom.js';
 
 const StyledHeader = styled(Header)`
   ${tw`justify-between`}
@@ -68,7 +71,7 @@ export default ({
     <Container>
       <TwoColumn>
         <LeftColumn>
-          <StyledHeader links={navLinks} collapseBreakpointClass="sm" />
+          <StyledHeader links={<NavLinksCustom/>} collapseBreakpointClass="sm" />
           <Content>
             <Heading>{heading}</Heading>
             <Paragraph>{description}</Paragraph>
