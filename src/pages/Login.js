@@ -11,7 +11,7 @@ import twitterIconImageSrc from "images/twitter-icon.png";
 import roosterEmoji from "images/chicken-emoji.png"
 import { ReactComponent as LoginIcon } from "feather-icons/dist/icons/log-in.svg";
 
-const Container = tw(ContainerBase)`min-h-screen bg-orange-500 text-white font-medium flex justify-center -m-8`;
+const Container = tw(ContainerBase)`min-h-screen bg-primary-600 text-white font-medium flex justify-center -m-8`;
 const Content = tw.div`max-w-screen-xl m-0 sm:mx-20 sm:my-16 bg-white text-gray-900 shadow sm:rounded-lg flex justify-center flex-1`;
 const MainContainer = tw.div`lg:w-1/2 xl:w-5/12 p-6 sm:p-12`;
 const LogoLink = tw.a``;
@@ -48,7 +48,7 @@ const SubmitButton = styled.button`
     ${tw`ml-3`}
   }
 `;
-const IllustrationContainer = tw.div`sm:rounded-r-lg flex-1 bg-orange-200 text-center hidden lg:flex justify-center`;
+const IllustrationContainer = tw.div`sm:rounded-r-lg flex-1 bg-primary-100 text-center hidden lg:flex justify-center`;
 const IllustrationImage = styled.div`
   ${props => `background-image: url("${props.imageSrc}");`}
   ${tw`m-12 xl:m-16 w-full max-w-sm bg-contain bg-center bg-no-repeat`}
@@ -63,12 +63,13 @@ export default ({
       iconImageSrc: googleIconImageSrc,
       text: "Sign In With Google",
       url: "https://google.com"
-    },
-    {
-      iconImageSrc: twitterIconImageSrc,
-      text: "Sign In With Twitter",
-      url: "https://twitter.com"
     }
+    // ,
+    // {
+    //   iconImageSrc: twitterIconImageSrc,
+    //   text: "Sign In With Twitter",
+    //   url: "https://twitter.com"
+    // }
   ],
   submitButtonText = "Sign In",
   SubmitButtonIcon = LoginIcon,
