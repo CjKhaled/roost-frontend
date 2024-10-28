@@ -1,29 +1,21 @@
-// \src\store\store.js
+// src/store/store.js
 
-import { configureStore, createSlice } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from 'redux';
-
-const authSlice = createSlice({
-  name: 'auth',
-  initialState: { isLoggedIn: false },
-  reducers: {
-    login: (state) => { state.isLoggedIn = true; },
-    logout: (state) => { state.isLoggedIn = false; }
-  }
-});
-
-export const { login, logout } = authSlice.actions;
+import userReducer from './userSlice';
+import listingsReducer from './listingsSlice';
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth'],
+  whitelist: ['user', 'listings'],
 };
 
 const rootReducer = combineReducers({
-  auth: authSlice.reducer,
+  user: userReducer,
+  listings: listingsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useSelector } from 'react-redux';
 import tw from "twin.macro";
 import styled from "styled-components";
 import { ContentWithPaddingXl } from "components/misc/Layouts";
@@ -62,74 +63,24 @@ const PrimaryButton = tw(PrimaryButtonBase)`mt-auto sm:text-lg rounded-none w-fu
 
 const ListingsPage = () => {
   const navigate = useNavigate();
-  const [listings, setListings] = useState([
-    {
-      id: 1,
-      title: "Hotel A",
-      price: "$120",
-      rating: 4.8,
-      imageSrc: "https://example.com/hotel-a.jpg",
-    },
-    {
-      id: 2,
-      title: "Hotel B",
-      price: "$90",
-      rating: 4.5,
-      imageSrc: "https://example.com/hotel-b.jpg",
-    },
-    {
-      id: 3,
-      title: "Hotel C",
-      price: "$150",
-      rating: 4.9,
-      imageSrc: "https://example.com/hotel-c.jpg",
-    },
-    {
-      id: 4,
-      title: "Hotel D",
-      price: "$110",
-      rating: 4.7,
-      imageSrc: "https://example.com/hotel-d.jpg",
-    },
-    {
-      id: 5,
-      title: "Hotel D",
-      price: "$110",
-      rating: 4.7,
-      imageSrc: "https://example.com/hotel-d.jpg",
-    },
-    {
-      id: 6,
-      title: "Hotel D",
-      price: "$110",
-      rating: 4.7,
-      imageSrc: "https://example.com/hotel-d.jpg",
-    },
-    {
-      id: 7,
-      title: "Hotel D",
-      price: "$110",
-      rating: 4.7,
-      imageSrc: "https://example.com/hotel-d.jpg",
-    },
-  ]);
+  const listings = useSelector(state => state.listings.listings);
+  const [sortOption, setSortOption] = useState(null);
 
   const handleBookNow = (id) => {
     navigate(`/listing/${id}`);
   };
   
-
-  const handleSortChange = (e) => {
-    const sortedListings = [...listings].sort((a, b) => {
-      if (e.target.value === "price")
-        return (
-          parseFloat(a.price.replace("$", "")) -
-          parseFloat(b.price.replace("$", ""))
-        );
-      if (e.target.value === "rating") return b.rating - a.rating;
+  const sortedListings = useMemo(() => {
+    if (!sortOption) return listings;
+    return [...listings].sort((a, b) => {
+      if (sortOption === "price") return a.price - b.price;
+      if (sortOption === "rating") return b.rating - a.rating;
       return 0;
     });
-    setListings(sortedListings);
+  }, [listings, sortOption]);
+
+  const handleSortChange = (e) => {
+    setSortOption(e.target.value);
   };
 
   const handleFilterChange = (e) => {
@@ -145,15 +96,15 @@ const ListingsPage = () => {
             onFilterChange={handleFilterChange}
           />
           <CardContainer>
-            {listings.map((card, index) => (
+            {sortedListings.map((card, index) => (
               <Card key={index}>
                 <CardImage imageSrc={card.imageSrc} />
                 <TextInfo>
                   <TitleReviewContainer>
-                    <Title>{card.title}</Title>
+                    <Title>{card.name}</Title>
                     <RatingsInfo>
                       <StarIcon />
-                      <Rating>{card.rating}</Rating>
+                      <Rating>{card.rating || "N/A"}</Rating>
                     </RatingsInfo>
                   </TitleReviewContainer>
                   <SecondaryInfoContainer>
@@ -161,16 +112,16 @@ const ListingsPage = () => {
                       <IconContainer>
                         <LocationIcon />
                       </IconContainer>
-                      <Text>{card.locationText}</Text>
+                      <Text>{card.address}</Text>
                     </IconWithText>
                     <IconWithText>
                       <IconContainer>
                         <PriceIcon />
                       </IconContainer>
-                      <Text>{card.pricingText}</Text>
+                      <Text>{card.price ? `$${card.price}` : "N/A"}</Text>
                     </IconWithText>
                   </SecondaryInfoContainer>
-                  <Description>{card.description}</Description>
+                  <Description>{card.description || "No description available."}</Description>
                 </TextInfo>
                 <PrimaryButton onClick={() => handleBookNow(card.id)}>Book Now</PrimaryButton>
               </Card>

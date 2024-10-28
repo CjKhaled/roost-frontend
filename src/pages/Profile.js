@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useDispatch } from "react-redux";
-import { logout } from "store/store";
+import { logout } from "store/userSlice";
 import tw from "twin.macro";
 import styled from "styled-components";
 import ProfileThreeColGrid from "components/cards/ProfileThreeColGrid";

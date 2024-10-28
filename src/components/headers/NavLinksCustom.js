@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { login, logout } from "../../store/store";
+import { login, logout } from "../../store/userSlice";
 import tw from "twin.macro";
 import styled from "styled-components";
 import { css } from "styled-components/macro"; //eslint-disable-line
@@ -20,7 +20,7 @@ const NavLink = tw(NavLinkBase)`
 `;
 
 export default function NavLinksCustom() {
-  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const dispatch = useDispatch();
 
   const handleLogin = () => {
