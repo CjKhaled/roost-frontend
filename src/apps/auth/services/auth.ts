@@ -7,7 +7,7 @@ interface ApiError {
 }
 
 class AuthService {
-  private readonly API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'
+  private readonly API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'
 
   async login (data: LoginFormData): Promise<AuthResponse> {
     try {

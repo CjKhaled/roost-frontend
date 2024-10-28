@@ -7,7 +7,8 @@
       "*.ts",
       ".eslintrc.json",
       "vite.config.ts",
-      "tailwind.config.ts"
+      "tailwind.config.ts",
+      "postcss.config.cjs"
     ],
     "compilerOptions": {
       "noEmit": true

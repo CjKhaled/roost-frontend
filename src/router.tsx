@@ -10,7 +10,7 @@ const routes: RouteObject[] = [
     path: '/',
     element: <App />,
     children: [
-      { index: true, element: <Navigate to="/login" /> }, // Redirect root path to login
+      { index: true, element: <Navigate to='/login' /> }, // Redirect root path to login
       ...authRoutes,
       ...listingsRoutes,
       ...profileRoutes
