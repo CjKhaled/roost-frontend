@@ -5,12 +5,12 @@ import {
   Bed,
   Bath,
   Heart,
-  Share2,
   ChevronLeft,
   MessageCircle,
   Check,
   Info,
-  User
+  User,
+  X
 } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
@@ -22,6 +22,13 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '../../../components/ui/carousel'
+import {
+  Dialog,
+  DialogContent,
+  DialogClose
+} from '../../../components/ui/dialog'
+import ProfileMenu from '../components/ProfileMenu'
+import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 
 interface Landlord {
   name: string
@@ -42,6 +49,10 @@ interface ListingData {
   description: string
   policies: string[]
   landlord?: Landlord
+  location: {
+    lat: number
+    lng: number
+  }
 }
 
 const sampleListing: ListingData = {
@@ -69,12 +80,22 @@ const sampleListing: ListingData = {
   ],
   landlord: {
     name: 'John Doe'
-  }
+  },
+  location: { lat: 29.6552, lng: -82.3357 }
 }
 
 const ListingDetails = (): JSX.Element => {
   const [isFavorited, setIsFavorited] = useState<boolean>(false)
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
   const listing = sampleListing
+
+  const handleImageClick = (index: number) => {
+    setCurrentImageIndex(index)
+    console.log(currentImageIndex)
+    setIsImageModalOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 to-amber-50">
@@ -99,13 +120,7 @@ const ListingDetails = (): JSX.Element => {
                 <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
                 {isFavorited ? 'Saved' : 'Save'}
               </Button>
-              <Button
-                variant="outline"
-                className="border-amber-200 hover:bg-amber-50"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+              <ProfileMenu />
             </div>
           </div>
         </div>
@@ -122,7 +137,10 @@ const ListingDetails = (): JSX.Element => {
                 <CarouselContent>
                   {listing.imageUrls.map((imageUrl, index) => (
                     <CarouselItem key={index} className='basis-1/2'>
-                      <div className="aspect-video rounded-lg overflow-hidden bg-amber-100">
+                      <div
+                        className="aspect-video rounded-lg overflow-hidden bg-amber-100"
+                        onClick={() => { handleImageClick(index) }}
+                      >
                         <img
                           src={imageUrl}
                           alt={`${listing.title} - Image ${index + 1}`}
@@ -139,26 +157,26 @@ const ListingDetails = (): JSX.Element => {
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="bg-amber-50/50 border border-amber-200">
-                <TabsTrigger
-                  value="overview"
-                  className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900"
-                >
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger
-                  value="details"
-                  className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900"
-                >
-                  Details & Amenities
-                </TabsTrigger>
-                <TabsTrigger
-                  value="policies"
-                  className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900"
-                >
-                  Policies
-                </TabsTrigger>
-              </TabsList>
+            <TabsList className="bg-amber-50/50 border border-amber-200">
+              <TabsTrigger
+                value="overview"
+                className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger
+                value="details"
+                className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                Details & Amenities
+              </TabsTrigger>
+              <TabsTrigger
+                value="policies"
+                className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                Policies
+              </TabsTrigger>
+            </TabsList>
 
               <TabsContent value="overview">
                 <div className="space-y-6">
@@ -199,7 +217,13 @@ const ListingDetails = (): JSX.Element => {
                     <h3 className="font-semibold text-amber-900 mb-4">Location</h3>
                     <div className="aspect-[16/9] rounded-lg overflow-hidden">
                       <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-700 border border-amber-200">
-                        Map goes here
+                        <APIProvider apiKey={MAPS_API_KEY}>
+                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location}>
+                            <AdvancedMarker key={listing.id} position={listing.location}>
+                              <Pin background='#b45309' />
+                            </AdvancedMarker>
+                          </Map>
+                        </APIProvider>
                       </div>
                     </div>
                   </div>
@@ -301,6 +325,39 @@ const ListingDetails = (): JSX.Element => {
           </div>
         </div>
       </main>
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogContent className="max-w-screen-lg w-full p-0 bg-black/90">
+          <div className="relative">
+            <DialogClose className="absolute right-4 top-4 z-50">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/20"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </DialogClose>
+
+            <Carousel className="w-full">
+              <CarouselContent>
+                {listing.imageUrls.map((imageUrl, index) => (
+                  <CarouselItem key={index}>
+                    <div className="flex items-center justify-center min-h-[200px] h-[calc(100vh-200px)]">
+                      <img
+                        src={imageUrl}
+                        alt={`${listing.title} - Image ${index + 1}`}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-4 bg-black/50 hover:bg-black/70 text-white border-none" />
+              <CarouselNext className="right-4 bg-black/50 hover:bg-black/70 text-white border-none" />
+            </Carousel>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
