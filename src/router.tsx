@@ -1,7 +1,7 @@
 import { createBrowserRouter, type RouteObject, Navigate } from 'react-router-dom'
 import { authRoutes } from './apps/auth/routes'
 import { listingsRoutes } from './apps/listings/routes'
-import { profileRoutes } from './apps/profile/routes'
+import { profileRoutes } from './apps/menu/routes'
 import App from './App'
 
 // Combine all routes into a single array of RouteObjects
