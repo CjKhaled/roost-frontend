@@ -7,21 +7,24 @@ import {
   Heart,
   Share2,
   ChevronLeft,
-  Mail,
-  Phone,
   MessageCircle,
   Check,
   Info,
   User
 } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
-import { Card, CardContent } from '../../../components/ui/card'
-// import { Badge } from '../../../components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
+} from '../../../components/ui/carousel'
 
 interface Landlord {
   name: string
-  responseTime?: string
 }
 
 interface ListingData {
@@ -30,7 +33,7 @@ interface ListingData {
   address: string
   price: number
   availableFrom: string
-  imageUrl: string
+  imageUrls: string[]
   amenities: string[]
   type: string
   bedrooms: number
@@ -47,13 +50,17 @@ const sampleListing: ListingData = {
   address: '123 College Ave',
   price: 800,
   availableFrom: 'Aug 1 - Jul 31',
-  imageUrl: '/api/placeholder/800/600',
+  imageUrls: [
+    'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
+    'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
+    'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'
+  ],
   amenities: ['WiFi', 'Furnished', 'Utilities Included'],
   type: 'Studio',
   bedrooms: 1,
   bathrooms: 1,
   utilities: ['Water', 'Internet', 'Trash'],
-  description: 'Experience modern living in this beautifully maintained property. Perfect for students looking for a convenient and comfortable living space near campus.',
+  description: 'Experience modern living in this beautifully maintained property. Perfect for students looking for a convenient and comfortable living space near campus.\n\nThis property features updated appliances and modern finishes throughout. The open concept layout maximizes the living space, making it perfect for both studying and entertaining.\n\nThe location couldn\'t be better - just minutes away from campus, local restaurants, and shopping centers. You\'ll love the convenience of having everything you need right at your doorstep.',
   policies: [
     'Minimum 12-month lease',
     'Security deposit required',
@@ -61,8 +68,7 @@ const sampleListing: ListingData = {
     'Pet policy varies'
   ],
   landlord: {
-    name: 'John Doe',
-    responseTime: '24 hours'
+    name: 'John Doe'
   }
 }
 
@@ -110,13 +116,25 @@ const ListingDetails = (): JSX.Element => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Images */}
-            <div className="aspect-video rounded-lg overflow-hidden bg-amber-100">
-              <img
-                src={listing.imageUrl}
-                alt={listing.title}
-                className="w-full h-full object-cover"
-              />
+            {/* Image Carousel */}
+            <div className="relative group">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {listing.imageUrls.map((imageUrl, index) => (
+                    <CarouselItem key={index} className='basis-1/2'>
+                      <div className="aspect-video rounded-lg overflow-hidden bg-amber-100">
+                        <img
+                          src={imageUrl}
+                          alt={`${listing.title} - Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-4 bg-black/50 hover:bg-black/70 text-white border-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CarouselNext className="right-4 bg-black/50 hover:bg-black/70 text-white border-none opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Carousel>
             </div>
 
             {/* Tabs */}
@@ -144,10 +162,6 @@ const ListingDetails = (): JSX.Element => {
 
               <TabsContent value="overview">
                 <div className="space-y-6">
-                  <div className="prose max-w-none">
-                    <p className="text-amber-800">{listing.description}</p>
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-white/50 border-amber-200">
                       <CardContent className="p-4 space-y-4">
@@ -194,6 +208,17 @@ const ListingDetails = (): JSX.Element => {
 
               <TabsContent value="details">
                 <div className="space-y-6">
+                  <Card className="bg-white/50 border-amber-200">
+                    <CardHeader>
+                      <CardTitle className="text-amber-900">Description</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose max-w-none text-amber-800 whitespace-pre-line">
+                        {listing.description}
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   <Card className="bg-white/50 border-amber-200">
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-amber-900 mb-4">Amenities</h3>
@@ -254,17 +279,12 @@ const ListingDetails = (): JSX.Element => {
 
                   {listing.landlord && (
                     <div className="pt-4 border-t border-amber-200">
-                      <h3 className="font-semibold text-amber-900 mb-3">Contact Landlord</h3>
+                      <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
                       <div className="space-y-2 text-amber-700">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
                           <span>{listing.landlord.name}</span>
                         </div>
-                        {listing.landlord.responseTime && (
-                          <div className="text-sm text-amber-600">
-                            Usually responds within {listing.landlord.responseTime}
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}
@@ -272,23 +292,8 @@ const ListingDetails = (): JSX.Element => {
                   <div className="space-y-3">
                     <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
                       <MessageCircle className="h-4 w-4 mr-2" />
-                      Message Landlord
+                      Message
                     </Button>
-                    <Button variant="outline" className="w-full border-amber-200 hover:bg-amber-50">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Request Phone Call
-                    </Button>
-                    <Button variant="outline" className="w-full border-amber-200 hover:bg-amber-50">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email
-                    </Button>
-                  </div>
-
-                  <div className="pt-4 border-t border-amber-200">
-                    <div className="flex items-center gap-2 text-amber-700">
-                      <Info className="h-4 w-4" />
-                      <span className="text-sm">Request a tour to confirm availability</span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
