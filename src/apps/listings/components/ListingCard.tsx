@@ -9,7 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardFooter } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
-
+import { useNavigate } from 'react-router-dom'
 import { type Listing } from '../types/listing'
 
 interface ListingCardProps {
@@ -19,6 +19,12 @@ interface ListingCardProps {
 const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
   const [favorites, setFavorites] = useState(new Set())
   const [hoveredListing, setHoveredListing] = useState(0)
+  const navigate = useNavigate()
+
+  const handleClick = () => {
+    navigate(`/listings/${listing.id}`)
+  }
+
   const toggleFavorite = (id: number): void => {
     setFavorites(prev => {
       const newFavorites = new Set(prev)
@@ -30,6 +36,7 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
       return newFavorites
     })
   }
+
   return (
 
       <Card
@@ -105,7 +112,7 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
         </CardContent>
 
         <CardFooter className='p-4 pt-0'>
-          <Button className='w-full bg-amber-600 hover:bg-amber-700 text-white'>
+          <Button className='w-full bg-amber-600 hover:bg-amber-700 text-white' onClick={handleClick}>
             View Details
           </Button>
         </CardFooter>

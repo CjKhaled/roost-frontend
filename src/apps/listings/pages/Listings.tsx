@@ -66,43 +66,6 @@ const listings = [
   }
 ]
 
-// const ProfileButton = (): JSX.Element => (
-//   <DropdownMenu>
-//     <DropdownMenuTrigger asChild>
-//       <Button
-//         variant='outline'
-//         className='roost-button flex items-center gap-2 hover:bg-amber-50'
-//       >
-//         <User className='h-4 w-4' />
-//         Profile
-//       </Button>
-//     </DropdownMenuTrigger>
-//     <DropdownMenuContent
-//       align='end'
-//       className='w-48 bg-white border border-amber-100'
-//     >
-//       <Link to='/manage-listings'>
-//         <DropdownMenuItem className='flex items-center gap-2 hover:bg-amber-50 focus:bg-amber-50 cursor-pointer'>
-//           <House className='h-4 w-4' />
-//           <span>Manage Listings</span>
-//         </DropdownMenuItem>
-//       </Link>
-//       <Link to='/messages'>
-//         <DropdownMenuItem className='flex items-center gap-2 hover:bg-amber-50 focus:bg-amber-50 cursor-pointer'>
-//           <MessageSquare className='h-4 w-4' />
-//           <span>Messages</span>
-//         </DropdownMenuItem>
-//       </Link>
-//       <Link to='/settings'>
-//         <DropdownMenuItem className='flex items-center gap-2 hover:bg-amber-50 focus:bg-amber-50 cursor-pointer'>
-//           <Settings className='h-4 w-4' />
-//           <span>Settings</span>
-//         </DropdownMenuItem>
-//       </Link>
-//     </DropdownMenuContent>
-//   </DropdownMenu>
-// )
-
 interface FilterState {
   price: number
   bedrooms: number | ''
@@ -137,23 +100,25 @@ const Listings = (): JSX.Element => {
       {/* Header */}
       <div className='p-4 border-b bg-white/50 backdrop-blur-sm'>
         <div className='max-w-[1920px] mx-auto'>
-          <div className='flex items-center justify-between mb-4'>
-            <div className='flex items-center gap-2'>
-              <Leaf className='h-6 w-6 text-amber-600' />
-              <span className='text-xl font-bold text-amber-900'>Roost</span>
+          <div className='flex items-center justify-between gap-8'>
+            {/* Logo Section */}
+            <div className='flex items-center gap-3 min-w-fit'>
+              <Leaf className='h-8 w-8 text-amber-600' />
+              <span className='text-3xl font-bold text-amber-900'>Roost</span>
             </div>
 
-          </div>
-          <div className='flex gap-4 items-center'>
-            <div className='relative flex-1'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-              <Input
-                placeholder='Search by location, price, or amenities...'
-                className='pl-10 border-amber-200 focus:border-amber-500'
-              />
+            {/* Search and Controls Section */}
+            <div className='flex-1 flex gap-4 items-center'>
+              <div className='relative flex-1'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+                <Input
+                  placeholder='Search by location, price, or amenities...'
+                  className='pl-10 border-amber-200 focus:border-amber-500'
+                />
+              </div>
+              <FilterPopover onFiltersChange={handleFiltersChange} listings={listings} />
+              <ProfileMenu />
             </div>
-            <FilterPopover onFiltersChange={handleFiltersChange} listings={listings} />
-            <ProfileMenu />
           </div>
         </div>
       </div>
