@@ -29,59 +29,43 @@ import {
 } from '../../../components/ui/dialog'
 import ProfileMenu from '../components/ProfileMenu'
 import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { type Listing } from '../types/listing'
 
-interface Landlord {
-  name: string
-}
-
-interface ListingData {
-  id: number
-  title: string
-  address: string
-  price: number
-  availableFrom: string
-  imageUrls: string[]
-  amenities: string[]
-  type: string
-  bedrooms: number
-  bathrooms: number
-  utilities: string[]
-  description: string
-  policies: string[]
-  landlord?: Landlord
-  location: {
-    lat: number
-    lng: number
-  }
-}
-
-const sampleListing: ListingData = {
-  id: 1,
-  title: 'Cozy Studio near Campus',
+const sampleListing: Listing = {
+  id: '1',
+  name: 'Cozy Studio near Campus',
   address: '123 College Ave',
+  location: { lat: 29.6552, lng: -82.3357 },
   price: 800,
-  availableFrom: 'Aug 1 - Jul 31',
-  imageUrls: [
+  available: {
+    from: '2024-08-01',
+    to: '2025-07-31'
+  },
+  imageUrl: [
     'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
     'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
     'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'
   ],
-  amenities: ['WiFi', 'Furnished', 'Utilities Included'],
-  type: 'Studio',
-  bedrooms: 1,
-  bathrooms: 1,
-  utilities: ['Water', 'Internet', 'Trash'],
   description: 'Experience modern living in this beautifully maintained property. Perfect for students looking for a convenient and comfortable living space near campus.\n\nThis property features updated appliances and modern finishes throughout. The open concept layout maximizes the living space, making it perfect for both studying and entertaining.\n\nThe location couldn\'t be better - just minutes away from campus, local restaurants, and shopping centers. You\'ll love the convenience of having everything you need right at your doorstep.',
-  policies: [
-    'Minimum 12-month lease',
-    'Security deposit required',
-    'No smoking',
-    'Pet policy varies'
-  ],
-  landlord: {
-    name: 'John Doe'
+  amenities: ['WiFi', 'Parking', 'Laundry'],
+  utilities: ['Water', 'Electricity', 'Gas'],
+  policies: {
+    strictParking: true,
+    strictNoisePolicy: true,
+    guestsAllowed: true,
+    petsAllowed: false,
+    smokingAllowed: false
   },
-  location: { lat: 29.6552, lng: -82.3357 }
+  bedCount: 1,
+  bathCount: 1,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
+  lister: {
+    id: '123',
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com'
+  }
 }
 
 const ListingDetails = (): JSX.Element => {
@@ -90,6 +74,22 @@ const ListingDetails = (): JSX.Element => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
   const listing = sampleListing
+
+  const formatDateRange = (from: string, to: string): string => {
+    const fromDate = new Date(from)
+    const toDate = new Date(to)
+    return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
+  }
+
+  const getPolicyList = (): string[] => {
+    const policies: string[] = []
+    if (listing.policies.strictParking) policies.push('Strict parking policy')
+    if (listing.policies.strictNoisePolicy) policies.push('Strict noise policy')
+    if (listing.policies.guestsAllowed) policies.push('Guests allowed')
+    if (!listing.policies.petsAllowed) policies.push('No pets allowed')
+    if (!listing.policies.smokingAllowed) policies.push('No smoking')
+    return policies
+  }
 
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index)
@@ -135,7 +135,7 @@ const ListingDetails = (): JSX.Element => {
             <div className="relative group">
               <Carousel className="w-full">
                 <CarouselContent>
-                  {listing.imageUrls.map((imageUrl, index) => (
+                  {listing.imageUrl.map((imageUrl, index) => (
                     <CarouselItem key={index} className='basis-1/2'>
                       <div
                         className="aspect-video rounded-lg overflow-hidden bg-amber-100"
@@ -143,7 +143,7 @@ const ListingDetails = (): JSX.Element => {
                       >
                         <img
                           src={imageUrl}
-                          alt={`${listing.title} - Image ${index + 1}`}
+                          alt={`${listing.name} - Image ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -187,11 +187,11 @@ const ListingDetails = (): JSX.Element => {
                         <div className="grid grid-cols-2 gap-3">
                           <div className="flex items-center gap-2 text-amber-700">
                             <Bed className="h-4 w-4" />
-                            <span>{listing.bedrooms} Bedrooms</span>
+                            <span>{listing.bedCount} Bedrooms</span>
                           </div>
                           <div className="flex items-center gap-2 text-amber-700">
                             <Bath className="h-4 w-4" />
-                            <span>{listing.bathrooms} Bathrooms</span>
+                            <span>{listing.bathCount} Bathrooms</span>
                           </div>
                         </div>
                       </CardContent>
@@ -264,7 +264,7 @@ const ListingDetails = (): JSX.Element => {
                   <CardContent className="p-4 space-y-4">
                     <h3 className="font-semibold text-amber-900">Lease Policies</h3>
                     <div className="grid gap-3">
-                      {listing.policies.map((policy) => (
+                      {getPolicyList().map((policy) => (
                         <div key={policy} className="flex items-start gap-2 text-amber-700">
                           <Info className="h-4 w-4 mt-1 flex-shrink-0" />
                           <span>{policy}</span>
@@ -283,7 +283,7 @@ const ListingDetails = (): JSX.Element => {
               <Card className="bg-white/50 border-amber-200">
                 <CardContent className="p-6 space-y-6">
                   <div>
-                    <h1 className="text-2xl font-bold text-amber-900 mb-2">{listing.title}</h1>
+                    <h1 className="text-2xl font-bold text-amber-900 mb-2">{listing.name}</h1>
                     <div className="flex items-center gap-2 text-amber-700">
                       <MapPin className="h-4 w-4" />
                       <span>{listing.address}</span>
@@ -297,21 +297,19 @@ const ListingDetails = (): JSX.Element => {
                     </div>
                     <div className="flex items-center gap-2 text-amber-700">
                       <Calendar className="h-4 w-4" />
-                      <span>Available {listing.availableFrom}</span>
+                      <span>Available {formatDateRange(listing.available.from, listing.available.to)}</span>
                     </div>
                   </div>
 
-                  {listing.landlord && (
-                    <div className="pt-4 border-t border-amber-200">
-                      <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
-                      <div className="space-y-2 text-amber-700">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>{listing.landlord.name}</span>
-                        </div>
+                  <div className="pt-4 border-t border-amber-200">
+                    <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
+                    <div className="space-y-2 text-amber-700">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>{listing.lister.firstName} {listing.lister.lastName}</span>
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   <div className="space-y-3">
                     <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
@@ -325,6 +323,7 @@ const ListingDetails = (): JSX.Element => {
           </div>
         </div>
       </main>
+      {/* Image modal */}
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
         <DialogContent className="max-w-screen-lg w-full p-0 bg-black/90">
           <div className="relative">
@@ -340,12 +339,12 @@ const ListingDetails = (): JSX.Element => {
 
             <Carousel className="w-full">
               <CarouselContent>
-                {listing.imageUrls.map((imageUrl, index) => (
+                {listing.imageUrl.map((imageUrl, index) => (
                   <CarouselItem key={index}>
                     <div className="flex items-center justify-center min-h-[200px] h-[calc(100vh-200px)]">
                       <img
                         src={imageUrl}
-                        alt={`${listing.title} - Image ${index + 1}`}
+                        alt={`${listing.name} - Image ${index + 1}`}
                         className="max-h-full max-w-full object-contain"
                       />
                     </div>

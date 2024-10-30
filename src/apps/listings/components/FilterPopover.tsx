@@ -6,7 +6,6 @@ import {
 
 import { Button } from '../../../components/ui/button'
 
-import { type Listing } from '../types/listing'
 import { Slider } from '../../../components/ui/slider'
 import { Label } from '../../../components/ui/label'
 import { Checkbox } from '../../../components/ui/checkbox'
@@ -19,12 +18,13 @@ import { format } from 'date-fns'
 import { type DateRange } from 'react-day-picker'
 import { Calendar as CalendarComponent } from '../../../components/ui/calendar'
 import { cn } from '../../../lib/utils'
+import { type Listing, type AmenityType } from '../types/listing'
 
 interface FilterState {
   price: number
-  bedrooms: number | ''
-  bathrooms: number | ''
-  amenities: string[]
+  bedCount: number | ''
+  bathCount: number | ''
+  amenities: AmenityType[]
   dateRange: DateRange | undefined
 }
 
@@ -45,13 +45,24 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
 
   const [filters, setFilters] = useState<FilterState>({
     price: maxPrice,
-    bedrooms: '',
-    bathrooms: '',
+    bedCount: '',
+    bathCount: '',
     amenities: [],
     dateRange: undefined
   })
 
-  const allAmenities: string[] = [...new Set(listings.flatMap(listing => listing.amenities))]
+  const ALL_AMENITIES: AmenityType[] = [
+    'WiFi',
+    'Parking',
+    'Laundry',
+    'Dishwasher',
+    'Gym',
+    'Pool',
+    'Study Room',
+    'Trash Pickup',
+    'Cable TV',
+    'Electric Vehicle Charging'
+  ]
 
   const handleFilterChange = (key: keyof FilterState, value: FilterState[keyof FilterState]): void => {
     const newFilters = { ...filters, [key]: value }
@@ -62,8 +73,8 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
   const clearFilters = (): void => {
     const resetFilters: FilterState = {
       price: maxPrice,
-      bedrooms: '',
-      bathrooms: '',
+      bedCount: '',
+      bathCount: '',
       amenities: [],
       dateRange: undefined
     }
@@ -131,11 +142,11 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     variant='outline'
                     size='sm'
                     className={`flex-1 ${
-                        filters.bedrooms === num
+                        filters.bedCount === num
                           ? 'bg-amber-600 text-white hover:bg-amber-700'
                           : 'hover:bg-amber-50 border-amber-200'
                       }`}
-                    onClick={() => { handleFilterChange('bedrooms', filters.bedrooms === num ? '' : num) }}
+                    onClick={() => { handleFilterChange('bedCount', filters.bedCount === num ? '' : num) }}
                   >
                     {num}
                   </Button>
@@ -153,11 +164,11 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     variant='outline'
                     size='sm'
                     className={`flex-1 ${
-                        filters.bathrooms === num
+                        filters.bathCount === num
                           ? 'bg-amber-600 text-white hover:bg-amber-700'
                           : 'hover:bg-amber-50 border-amber-200'
                       }`}
-                    onClick={() => { handleFilterChange('bathrooms', filters.bathrooms === num ? '' : num) }}
+                    onClick={() => { handleFilterChange('bathCount', filters.bathCount === num ? '' : num) }}
                   >
                     {num}
                   </Button>
@@ -167,34 +178,34 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
 
             {/* Amenities */}
             <div className='space-y-2'>
-              <Label className='text-amber-900'>Amenities</Label>
-              <div className='grid grid-cols-2 gap-2'>
-                {[...allAmenities].map((amenity) => (
-                  <div key={amenity} className='flex items-center space-x-2'>
-                    <Checkbox
-                      id={amenity}
-                      checked={filters.amenities.includes(amenity)}
-                      onCheckedChange={(checked: boolean | 'indeterminate') => {
-                        if (typeof checked === 'boolean') {
-                          handleFilterChange('amenities',
-                            checked
-                              ? [...filters.amenities, amenity]
-                              : filters.amenities.filter(a => a !== amenity)
-                          )
-                        }
-                      }}
-                      className='border-amber-200 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600'
-                    />
-                    <label
-                      htmlFor={amenity}
-                      className='text-sm text-amber-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                    >
-                      {amenity}
-                    </label>
-                  </div>
-                ))}
-              </div>
+            <Label className='text-amber-900'>Amenities</Label>
+            <div className='grid grid-cols-2 gap-2'>
+              {ALL_AMENITIES.map((amenity) => (
+                <div key={amenity} className='flex items-center space-x-2'>
+                  <Checkbox
+                    id={amenity}
+                    checked={filters.amenities.includes(amenity)}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => {
+                      if (typeof checked === 'boolean') {
+                        handleFilterChange('amenities',
+                          checked
+                            ? [...filters.amenities, amenity] as AmenityType[]
+                            : filters.amenities.filter(a => a !== amenity)
+                        )
+                      }
+                    }}
+                    className='border-amber-200 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600'
+                  />
+                  <label
+                    htmlFor={amenity}
+                    className='text-sm text-amber-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                  >
+                    {amenity}
+                  </label>
+                </div>
+              ))}
             </div>
+          </div>
 
             {/* Availability */}
             <div className='space-y-2'>

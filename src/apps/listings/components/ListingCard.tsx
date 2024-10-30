@@ -17,15 +17,15 @@ interface ListingCardProps {
 }
 
 const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
-  const [favorites, setFavorites] = useState(new Set())
-  const [hoveredListing, setHoveredListing] = useState(0)
+  const [favorites, setFavorites] = useState(new Set<string>())
+  const [hoveredListing, setHoveredListing] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const handleClick = () => {
     navigate(`/listings/${listing.id}`)
   }
 
-  const toggleFavorite = (id: number): void => {
+  const toggleFavorite = (id: string): void => {
     setFavorites(prev => {
       const newFavorites = new Set(prev)
       if (newFavorites.has(id)) {
@@ -37,6 +37,12 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
     })
   }
 
+  const formatDateRange = (from: string, to: string): string => {
+    const fromDate = new Date(from)
+    const toDate = new Date(to)
+    return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
+  }
+
   return (
 
       <Card
@@ -44,12 +50,12 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
           hoveredListing === listing.id ? 'ring-2 ring-amber-500' : ''
         }`}
         onMouseEnter={() => { setHoveredListing(listing.id) }}
-        onMouseLeave={() => { setHoveredListing(0) }}
+        onMouseLeave={() => { setHoveredListing(null) }}
       >
         <CardHeader className='p-0 relative'>
           <img
-            src={listing.imageUrl}
-            alt={listing.title}
+            src={listing.imageUrl[0]}
+            alt={listing.name}
             className='w-full h-48 object-cover'
           />
           <div className='absolute top-4 right-4 flex gap-2'>
@@ -76,7 +82,7 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
 
         <CardContent className='p-4'>
           <div className='mb-3'>
-            <h3 className='text-lg font-semibold text-amber-900'>{listing.title}</h3>
+            <h3 className='text-lg font-semibold text-amber-900'>{listing.name}</h3>
             <div className='flex items-center text-amber-700 gap-2 text-sm'>
               <MapPin className='h-4 w-4' />
               {listing.address}
@@ -86,15 +92,15 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
           <div className='flex items-center gap-4 text-sm text-amber-700 mb-3'>
             <span className='flex items-center gap-1'>
               <Bed className='h-4 w-4' />
-              {listing.bedrooms} bed
+              {listing.bedCount} bed
             </span>
             <span className='flex items-center gap-1'>
               <Bath className='h-4 w-4' />
-              {listing.bathrooms} bath
+              {listing.bathCount} bath
             </span>
             <span className='flex items-center gap-1'>
               <CalendarIcon className='h-4 w-4' />
-              {listing.availableFrom}
+              {formatDateRange(listing.available.from, listing.available.to)}
             </span>
           </div>
 

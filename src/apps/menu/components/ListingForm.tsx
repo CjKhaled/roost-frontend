@@ -1,4 +1,5 @@
 import { Button } from '../../../components/ui/button'
+import { useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -17,49 +18,22 @@ import { Textarea } from '../../../components/ui/textarea'
 import { Switch } from '../../../components/ui/switch'
 import { Checkbox } from '../../../components/ui/checkbox'
 import { useForm } from 'react-hook-form'
-
-interface Listing {
-  id: number
-  name: string
-  address: string
-  location: {
-    lat: number
-    lng: number
-  }
-  price: number
-  availableFrom: string
-  imageUrl: string
-  amenities: Array<'WiFi' | 'Parking' | 'Laundry' | 'Dishwasher' | 'Gym' | 'Pool' | 'Study Room' | 'Trash Pickup' | 'Cable TV' | 'Electric Vehicle Charging'>
-  utilities: Array<'Electricity' | 'Water' | 'Gas' | 'Sewer' | 'Pest Control'>
-  description: string
-  policies: {
-    strictParking?: boolean
-    strictNoisePolicy?: boolean
-    guests?: boolean
-    pets?: boolean
-    smoking?: boolean
-  }
-  bedCount: number
-  bathCount: number
-  createdAt: Date
-  updatedAt: Date
-  lister: {
-    id: number
-    firstName: string
-    lastName: string
-    email: string
-  }
-}
+import { Calendar as CalendarComponent } from '../../../components/ui/calendar'
+import { Calendar as CalendarIcon } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
+import { format } from 'date-fns'
+import { cn } from '../../../lib/utils'
+import { type Listing, type AmenityType, type UtilityType } from '../../listings/types/listing'
 
 interface ListingFormProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: Partial<Listing>) => void
-  initialData?: Listing
+  initialData: Listing | null
   mode: 'create' | 'edit'
 }
 
-const amenitiesList: Array<Listing['amenities'][number]> = [
+const amenitiesList: AmenityType[] = [
   'WiFi',
   'Parking',
   'Laundry',
@@ -72,7 +46,7 @@ const amenitiesList: Array<Listing['amenities'][number]> = [
   'Electric Vehicle Charging'
 ]
 
-const utilitiesList: Array<Listing['utilities'][number]> = [
+const utilitiesList: UtilityType[] = [
   'Electricity',
   'Water',
   'Gas',
@@ -81,21 +55,65 @@ const utilitiesList: Array<Listing['utilities'][number]> = [
 ]
 
 const policiesList = [
-  'strictParking',
-  'strictNoisePolicy',
-  'guests',
-  'pets',
-  'smoking'
+  { key: 'strictParking', label: 'Strict Parking' },
+  { key: 'strictNoisePolicy', label: 'Strict Noise Policy' },
+  { key: 'guestsAllowed', label: 'Guests Allowed' },
+  { key: 'petsAllowed', label: 'Pets Allowed' },
+  { key: 'smokingAllowed', label: 'Smoking Allowed' }
 ]
+
+const emptyFormValues = {
+  name: '',
+  description: '',
+  address: '',
+  location: {
+    lat: '',
+    lng: ''
+  },
+  price: '',
+  bedCount: '',
+  bathCount: '',
+  imageUrl: [''],
+  amenities: [],
+  utilities: [],
+  policies: {
+    strictParking: false,
+    strictNoisePolicy: false,
+    guestsAllowed: false,
+    petsAllowed: false,
+    smokingAllowed: false
+  },
+  available: {
+    from: '',
+    to: ''
+  }
+}
 
 const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFormProps) => {
   const form = useForm<Partial<Listing>>({
-    defaultValues: initialData ?? {
-      amenities: [],
-      utilities: [],
-      policies: {}
-    }
+    // @ts-expect-error: don't worry about this
+    defaultValues: emptyFormValues
   })
+
+  useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      // Reset form with initial data for edit mode
+      form.reset({
+        ...initialData,
+        available: {
+          from: initialData.available.from,
+          to: initialData.available.to
+        },
+        imageUrl: initialData.imageUrl,
+        amenities: initialData.amenities || [],
+        utilities: initialData.utilities || [],
+        policies: initialData.policies || {}
+      })
+    } else if (mode === 'create') {
+      // @ts-expect-error: don't worry about this
+      form.reset(emptyFormValues)
+    }
+  }, [mode, initialData, form, isOpen])
 
   const handleSubmit = (data: Partial<Listing>) => {
     onSubmit({
@@ -109,6 +127,11 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
       bathCount: parseInt(data.bathCount?.toString() ?? '0')
     })
     onClose()
+  }
+
+  const formatDate = (date: Date | undefined): string => {
+    if (!date) return ''
+    return format(date, 'LLL dd, y')
   }
 
   return (
@@ -236,13 +259,57 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
 
             <FormField
               control={form.control}
-              name="availableFrom"
+              name="available"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Available From</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} required />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Availability Period</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          'w-full justify-start text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value?.from
+                          ? (
+                              field.value.to
+                                ? (
+                            <>
+                              {formatDate(new Date(field.value.from))} -{' '}
+                              {formatDate(new Date(field.value.to))}
+                            </>
+                                  )
+                                : (
+                                    formatDate(new Date(field.value.from))
+                                  )
+                            )
+                          : (
+                          <span>Select availability period</span>
+                            )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        initialFocus
+                        mode="range"
+                        defaultMonth={field.value?.from ? new Date(field.value.from) : undefined}
+                        selected={{
+                          from: field.value?.from ? new Date(field.value.from) : undefined,
+                          to: field.value?.to ? new Date(field.value.to) : undefined
+                        }}
+                        onSelect={(dateRange) => {
+                          field.onChange({
+                            from: dateRange?.from?.toISOString() ?? '',
+                            to: dateRange?.to?.toISOString() ?? ''
+                          })
+                        }}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </FormItem>
               )}
             />
@@ -327,50 +394,25 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Policies</h3>
               <div className="grid grid-cols-2 gap-4">
-              {mode === 'create'
-                ? policiesList.map((policy) => (
-          <FormField
-            key={policy}
-            control={form.control}
-            name={`policies.${policy}`}
-            render={({ field }) => (
-              <FormItem className="flex items-center space-x-2">
-                <FormControl>
-                  <Switch
-                    checked={field.value ?? false}
-                    onCheckedChange={field.onChange}
+                {policiesList.map(({ key, label }) => (
+                  <FormField
+                    key={key}
+                    control={form.control}
+                    // @ts-expect-error: don't worry about this
+                    name={`policies.${key}`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            // @ts-expect-error: don't worry about this
+                            checked={field.value ?? false}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm font-normal">{label}</FormLabel>
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormLabel className="text-sm font-normal">
-                  {policy
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, (str) => str.toUpperCase())}
-                </FormLabel>
-              </FormItem>
-            )}
-          />
-                ))
-                : Object.entries(initialData?.policies ?? {}).map(([policy, value]) => (
-          <FormField
-            key={policy}
-            control={form.control}
-            name={`policies.${policy}`}
-            render={({ field }) => (
-              <FormItem className="flex items-center space-x-2">
-                <FormControl>
-                  <Switch
-                    checked={field.value ?? value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="text-sm font-normal">
-                  {policy
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, (str) => str.toUpperCase())}
-                </FormLabel>
-              </FormItem>
-            )}
-          />
                 ))}
               </div>
             </div>

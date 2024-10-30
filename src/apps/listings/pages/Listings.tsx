@@ -10,67 +10,140 @@ import FilterPopover from '../components/FilterPopover'
 import { type DateRange } from 'react-day-picker'
 import ListingCard from '../components/ListingCard'
 import ProfileMenu from '../components/ProfileMenu'
+import { type Listing, type AmenityType } from '../types/listing'
 
-const listings = [
+const listings: Listing[] = [
   {
-    id: 1,
-    title: 'Cozy Studio near Campus',
+    id: 'uuid-1', // In production, use actual UUIDs
+    name: 'Cozy Studio near Campus',
     address: '123 College Ave',
     location: { lat: 29.6436, lng: -82.3549 },
     price: 800,
-    availableFrom: 'Aug 1 - Jul 31',
-    imageUrl: 'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
-    amenities: ['WiFi', 'Furnished', 'Utilities Included'],
-    type: 'Studio',
-    bedrooms: 0,
-    bathrooms: 1
+    available: {
+      from: '2024-08-01',
+      to: '2025-07-31'
+    },
+    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
+    description: 'Comfortable studio apartment perfect for students, located just minutes from campus.',
+    amenities: ['WiFi', 'Parking', 'Laundry'],
+    utilities: ['Water', 'Electricity'],
+    policies: {
+      strictNoisePolicy: true,
+      guestsAllowed: true,
+      petsAllowed: false,
+      smokingAllowed: false
+    },
+    bedCount: 1,
+    bathCount: 1,
+    createdAt: new Date('2024-03-15'),
+    updatedAt: new Date('2024-03-15'),
+    lister: {
+      id: 'uuid-1',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com'
+    }
   },
   {
-    id: 2,
-    title: 'Modern 2BR with City View',
+    id: 'uuid-2',
+    name: 'Modern 2BR with City View',
     address: '456 University Dr',
     location: { lat: 29.6516, lng: -82.3248 },
     price: 1200,
-    availableFrom: 'Aug 1 - Jul 31',
-    imageUrl: 'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
-    amenities: ['Parking', 'Laundry', 'Dishwasher'],
-    type: '2 Bedroom',
-    bedrooms: 2,
-    bathrooms: 2
+    available: {
+      from: '2024-08-01',
+      to: '2025-07-31'
+    },
+    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
+    description: 'Luxurious 2-bedroom apartment with stunning city views and modern amenities.',
+    amenities: ['Parking', 'Laundry', 'Dishwasher', 'Gym', 'Pool'],
+    utilities: ['Water', 'Gas', 'Electricity', 'Sewer'],
+    policies: {
+      strictParking: true,
+      guestsAllowed: true,
+      petsAllowed: true,
+      smokingAllowed: false
+    },
+    bedCount: 2,
+    bathCount: 2,
+    createdAt: new Date('2024-03-14'),
+    updatedAt: new Date('2024-03-14'),
+    lister: {
+      id: 'uuid-2',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane.smith@example.com'
+    }
   },
   {
-    id: 3,
-    title: 'Luxury 1BR Downtown',
+    id: 'uuid-3',
+    name: 'Luxury 1BR Downtown',
     address: '789 Main St',
     location: { lat: 29.6552, lng: -82.3357 },
     price: 1500,
-    availableFrom: 'Aug 1 - Jul 31',
-    imageUrl: 'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
-    amenities: ['Gym', 'Pool', 'Pet Friendly', 'Parking'],
-    type: '1 Bedroom',
-    bedrooms: 1,
-    bathrooms: 1
+    available: {
+      from: '2024-08-01',
+      to: '2025-07-31'
+    },
+    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
+    description: 'High-end 1-bedroom apartment in the heart of downtown with premium amenities.',
+    amenities: ['Gym', 'Pool', 'Parking', 'Dishwasher', 'Cable TV'],
+    utilities: ['Water', 'Electricity', 'Gas', 'Pest Control'],
+    policies: {
+      strictNoisePolicy: true,
+      guestsAllowed: true,
+      petsAllowed: true,
+      smokingAllowed: false
+    },
+    bedCount: 1,
+    bathCount: 1,
+    createdAt: new Date('2024-03-13'),
+    updatedAt: new Date('2024-03-13'),
+    lister: {
+      id: 'uuid-3',
+      firstName: 'Robert',
+      lastName: 'Johnson',
+      email: 'robert.j@example.com'
+    }
   },
   {
-    id: 4,
-    title: 'Student Housing Special',
+    id: 'uuid-4',
+    name: 'Student Housing Special',
     address: '321 Dorm Lane',
     location: { lat: 29.6486, lng: -82.3431 },
     price: 650,
-    availableFrom: 'Aug 1 - Jul 31',
-    imageUrl: 'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
-    amenities: ['Study Room', 'Meal Plan', 'WiFi'],
-    type: 'Studio',
-    bedrooms: 1,
-    bathrooms: 1
+    available: {
+      from: '2024-08-01',
+      to: '2025-07-31'
+    },
+    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
+    description: 'Affordable student housing with great amenities and convenient campus location.',
+    amenities: ['Study Room', 'WiFi', 'Laundry'],
+    utilities: ['Water', 'Electricity'],
+    policies: {
+      strictNoisePolicy: true,
+      guestsAllowed: true,
+      petsAllowed: false,
+      smokingAllowed: false
+    },
+    bedCount: 1,
+    bathCount: 1,
+    createdAt: new Date('2024-03-12'),
+    updatedAt: new Date('2024-03-12'),
+    lister: {
+      id: 'uuid-4',
+      firstName: 'Sarah',
+      lastName: 'Wilson',
+      email: 'sarah.w@example.com'
+    }
   }
 ]
 
 interface FilterState {
   price: number
-  bedrooms: number | ''
-  bathrooms: number | ''
-  amenities: string[]
+  bedCount: number | ''
+  bathCount: number | ''
+  amenities: AmenityType[]
   dateRange: DateRange | undefined
 }
 
@@ -82,12 +155,12 @@ const Listings = (): JSX.Element => {
   const handleFiltersChange = (newFilters: FilterState) => {
     const filtered = listings.filter(listing => {
       const priceMatch = listing.price <= newFilters.price
-      const bedroomsMatch = !newFilters.bedrooms || listing.bedrooms === newFilters.bedrooms
-      const bathroomsMatch = !newFilters.bathrooms || listing.bathrooms === newFilters.bathrooms
+      const bedroomsMatch = !newFilters.bedCount || listing.bedCount === newFilters.bedCount
+      const bathroomsMatch = !newFilters.bathCount || listing.bathCount === newFilters.bathCount
       const amenitiesMatch = newFilters.amenities.length === 0 ||
         newFilters.amenities.every(amenity => listing.amenities.includes(amenity))
 
-      const dateMatch = !newFilters.dateRange || true // Implement your date logic here
+      const dateMatch = !newFilters.dateRange || true // Implement date logic here
 
       return priceMatch && bedroomsMatch && bathroomsMatch && amenitiesMatch && dateMatch
     })
