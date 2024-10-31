@@ -1,6 +1,33 @@
-export type AmenityType = 'WiFi' | 'Parking' | 'Laundry' | 'Dishwasher' | 'Gym' | 'Pool' | 'Study Room' | 'Trash Pickup' | 'Cable TV' | 'Electric Vehicle Charging'
-export type UtilityType = 'Electricity' | 'Water' | 'Gas' | 'Sewer' | 'Pest Control'
+export type AmenityType = 'WIFI' | 'PARKING' | 'LAUNDRY' | 'DISHWASHER' | 'GYM' | 'POOL' | 'STUDY_ROOM' | 'TRASH_PICKUP' | 'CABLE_TV' | 'EV_CHARGING'
+export type UtilityType = 'ELECTRICITY' | 'WATER' | 'GAS' | 'SEWER' | 'PEST_CONTROL'
 
+// API response listing
+export interface APIListing {
+  id: string
+  name: string
+  bedCount: number
+  bathCount: number
+  address: string
+  createdAt: string
+  price: number
+  description: string
+  updatedAt: string
+  locationLat: number
+  locationLng: number
+  availableFrom: string
+  availableTo: string
+  imageUrl: string[]
+  amenities: AmenityType[]
+  utilities: UtilityType[]
+  strictParking: boolean
+  strictNoisePolicy: boolean
+  guestsAllowed: boolean
+  petsAllowed: boolean
+  smokingAllowed: boolean
+  createdById: string
+}
+
+// frontend listing
 export interface Listing {
   id: string
   name: string
@@ -29,12 +56,7 @@ export interface Listing {
   bathCount: number
   createdAt: Date
   updatedAt: Date
-  lister: {
-    id: string
-    firstName: string
-    lastName: string
-    email: string
-  }
+  listerId: string
 }
 
 export interface ListingResponse {

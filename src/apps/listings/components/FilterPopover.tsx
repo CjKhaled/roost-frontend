@@ -52,16 +52,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
   })
 
   const ALL_AMENITIES: AmenityType[] = [
-    'WiFi',
-    'Parking',
-    'Laundry',
-    'Dishwasher',
-    'Gym',
-    'Pool',
-    'Study Room',
-    'Trash Pickup',
-    'Cable TV',
-    'Electric Vehicle Charging'
+    'WIFI', 'PARKING', 'LAUNDRY', 'DISHWASHER', 'GYM', 'POOL', 'STUDY_ROOM', 'TRASH_PICKUP', 'CABLE_TV', 'EV_CHARGING'
   ]
 
   const handleFilterChange = (key: keyof FilterState, value: FilterState[keyof FilterState]): void => {
@@ -85,6 +76,13 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
   const formatDate = (date: Date | undefined): string => {
     if (!date) return ''
     return format(date, 'LLL dd, y')
+  }
+
+  const formatAmenityLabel = (amenity: string): string => {
+    return amenity
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
   }
 
   return (
@@ -200,7 +198,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     htmlFor={amenity}
                     className='text-sm text-amber-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
                   >
-                    {amenity}
+                    {formatAmenityLabel(amenity)}
                   </label>
                 </div>
               ))}

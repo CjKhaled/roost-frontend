@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Search,
   Leaf
@@ -11,133 +11,7 @@ import { type DateRange } from 'react-day-picker'
 import ListingCard from '../components/ListingCard'
 import ProfileMenu from '../components/ProfileMenu'
 import { type Listing, type AmenityType } from '../types/listing'
-
-const listings: Listing[] = [
-  {
-    id: 'uuid-1', // In production, use actual UUIDs
-    name: 'Cozy Studio near Campus',
-    address: '123 College Ave',
-    location: { lat: 29.6436, lng: -82.3549 },
-    price: 800,
-    available: {
-      from: '2024-08-01',
-      to: '2025-07-31'
-    },
-    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
-    description: 'Comfortable studio apartment perfect for students, located just minutes from campus.',
-    amenities: ['WiFi', 'Parking', 'Laundry'],
-    utilities: ['Water', 'Electricity'],
-    policies: {
-      strictNoisePolicy: true,
-      guestsAllowed: true,
-      petsAllowed: false,
-      smokingAllowed: false
-    },
-    bedCount: 1,
-    bathCount: 1,
-    createdAt: new Date('2024-03-15'),
-    updatedAt: new Date('2024-03-15'),
-    lister: {
-      id: 'uuid-1',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com'
-    }
-  },
-  {
-    id: 'uuid-2',
-    name: 'Modern 2BR with City View',
-    address: '456 University Dr',
-    location: { lat: 29.6516, lng: -82.3248 },
-    price: 1200,
-    available: {
-      from: '2024-08-01',
-      to: '2025-07-31'
-    },
-    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
-    description: 'Luxurious 2-bedroom apartment with stunning city views and modern amenities.',
-    amenities: ['Parking', 'Laundry', 'Dishwasher', 'Gym', 'Pool'],
-    utilities: ['Water', 'Gas', 'Electricity', 'Sewer'],
-    policies: {
-      strictParking: true,
-      guestsAllowed: true,
-      petsAllowed: true,
-      smokingAllowed: false
-    },
-    bedCount: 2,
-    bathCount: 2,
-    createdAt: new Date('2024-03-14'),
-    updatedAt: new Date('2024-03-14'),
-    lister: {
-      id: 'uuid-2',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@example.com'
-    }
-  },
-  {
-    id: 'uuid-3',
-    name: 'Luxury 1BR Downtown',
-    address: '789 Main St',
-    location: { lat: 29.6552, lng: -82.3357 },
-    price: 1500,
-    available: {
-      from: '2024-08-01',
-      to: '2025-07-31'
-    },
-    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
-    description: 'High-end 1-bedroom apartment in the heart of downtown with premium amenities.',
-    amenities: ['Gym', 'Pool', 'Parking', 'Dishwasher', 'Cable TV'],
-    utilities: ['Water', 'Electricity', 'Gas', 'Pest Control'],
-    policies: {
-      strictNoisePolicy: true,
-      guestsAllowed: true,
-      petsAllowed: true,
-      smokingAllowed: false
-    },
-    bedCount: 1,
-    bathCount: 1,
-    createdAt: new Date('2024-03-13'),
-    updatedAt: new Date('2024-03-13'),
-    lister: {
-      id: 'uuid-3',
-      firstName: 'Robert',
-      lastName: 'Johnson',
-      email: 'robert.j@example.com'
-    }
-  },
-  {
-    id: 'uuid-4',
-    name: 'Student Housing Special',
-    address: '321 Dorm Lane',
-    location: { lat: 29.6486, lng: -82.3431 },
-    price: 650,
-    available: {
-      from: '2024-08-01',
-      to: '2025-07-31'
-    },
-    imageUrl: ['https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'],
-    description: 'Affordable student housing with great amenities and convenient campus location.',
-    amenities: ['Study Room', 'WiFi', 'Laundry'],
-    utilities: ['Water', 'Electricity'],
-    policies: {
-      strictNoisePolicy: true,
-      guestsAllowed: true,
-      petsAllowed: false,
-      smokingAllowed: false
-    },
-    bedCount: 1,
-    bathCount: 1,
-    createdAt: new Date('2024-03-12'),
-    updatedAt: new Date('2024-03-12'),
-    lister: {
-      id: 'uuid-4',
-      firstName: 'Sarah',
-      lastName: 'Wilson',
-      email: 'sarah.w@example.com'
-    }
-  }
-]
+import { listingsService } from '../services/listing'
 
 interface FilterState {
   price: number
@@ -150,7 +24,27 @@ interface FilterState {
 const Listings = (): JSX.Element => {
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
   const GAINESVILLE_CENTER = { lat: 29.6516, lng: -82.3248 }
-  const [filteredListings, setFilteredListings] = useState(listings)
+  const [listings, setListings] = useState<Listing[]>([])
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const data = await listingsService.getListings()
+        setListings(data)
+        setFilteredListings(data)
+      } catch (err) {
+        setError('Failed to fetch listings')
+        console.error(err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void fetchListings()
+  }, [])
 
   const handleFiltersChange = (newFilters: FilterState) => {
     const filtered = listings.filter(listing => {
@@ -166,6 +60,22 @@ const Listings = (): JSX.Element => {
     })
 
     setFilteredListings(filtered)
+  }
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50'>
+        <div className='text-amber-600'>Loading listings...</div>
+      </div>
+    )
+  }
+
+  if (error !== null) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50'>
+        <div className='text-red-600'>{error}</div>
+      </div>
+    )
   }
 
   return (
@@ -213,7 +123,7 @@ const Listings = (): JSX.Element => {
             <APIProvider apiKey={MAPS_API_KEY}>
               <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER}>
                 {filteredListings.map((listing) => (
-                  <AdvancedMarker key={listing.id} position={listing.location}>
+                  <AdvancedMarker key={listing.id} position={{ lat: listing.location.lat, lng: listing.location.lng }}>
                     <Pin background='#b45309' />
                   </AdvancedMarker>
                 ))}

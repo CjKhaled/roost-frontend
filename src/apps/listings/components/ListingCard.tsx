@@ -43,6 +43,13 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
     return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
   }
 
+  const formatAmenityLabel = (amenity: string): string => {
+    return amenity
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+  }
+
   return (
 
       <Card
@@ -111,7 +118,7 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
                 variant='secondary'
                 className='bg-orange-50 text-amber-700 border border-amber-200/50'
               >
-                {amenity}
+                {formatAmenityLabel(amenity)}
               </Badge>
             ))}
           </div>

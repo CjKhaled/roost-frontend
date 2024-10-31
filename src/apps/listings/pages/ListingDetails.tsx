@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   MapPin,
   Calendar,
@@ -30,55 +30,68 @@ import {
 import ProfileMenu from '../components/ProfileMenu'
 import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
 import { type Listing } from '../types/listing'
-
-const sampleListing: Listing = {
-  id: '1',
-  name: 'Cozy Studio near Campus',
-  address: '123 College Ave',
-  location: { lat: 29.6552, lng: -82.3357 },
-  price: 800,
-  available: {
-    from: '2024-08-01',
-    to: '2025-07-31'
-  },
-  imageUrl: [
-    'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
-    'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg',
-    'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'
-  ],
-  description: 'Experience modern living in this beautifully maintained property. Perfect for students looking for a convenient and comfortable living space near campus.\n\nThis property features updated appliances and modern finishes throughout. The open concept layout maximizes the living space, making it perfect for both studying and entertaining.\n\nThe location couldn\'t be better - just minutes away from campus, local restaurants, and shopping centers. You\'ll love the convenience of having everything you need right at your doorstep.',
-  amenities: ['WiFi', 'Parking', 'Laundry'],
-  utilities: ['Water', 'Electricity', 'Gas'],
-  policies: {
-    strictParking: true,
-    strictNoisePolicy: true,
-    guestsAllowed: true,
-    petsAllowed: false,
-    smokingAllowed: false
-  },
-  bedCount: 1,
-  bathCount: 1,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
-  lister: {
-    id: '123',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com'
-  }
-}
+import { useParams, useNavigate } from 'react-router-dom'
+import { listingsService } from '../services/listing'
 
 const ListingDetails = (): JSX.Element => {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [listing, setListing] = useState<Listing | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isFavorited, setIsFavorited] = useState<boolean>(false)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
-  const listing = sampleListing
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      if (id === undefined) {
+        navigate('/listings')
+        return
+      }
+
+      try {
+        const data = await listingsService.getListingById(id)
+        setListing(data)
+      } catch (err) {
+        setError('Failed to fetch listing details')
+        console.error(err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void fetchListing()
+  }, [id, navigate])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50">
+        <div className="text-amber-600">Loading listing details...</div>
+      </div>
+    )
+  }
+
+  if (error !== null || listing === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50">
+        <div className="text-red-600">{error ?? 'Listing not found'}</div>
+      </div>
+    )
+  }
 
   const formatDateRange = (from: string, to: string): string => {
     const fromDate = new Date(from)
     const toDate = new Date(to)
     return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
+  }
+
+  const formatAmenityLabel = (amenity: string): string => {
+    return amenity
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
   }
 
   const getPolicyList = (): string[] => {
@@ -136,7 +149,7 @@ const ListingDetails = (): JSX.Element => {
               <Carousel className="w-full">
                 <CarouselContent>
                   {listing.imageUrl.map((imageUrl, index) => (
-                    <CarouselItem key={index} className='basis-1/2'>
+                    <CarouselItem key={index} className={`${listing.imageUrl.length > 1 ? 'basis-1/2' : ''}`}>
                       <div
                         className="aspect-video rounded-lg overflow-hidden bg-amber-100"
                         onClick={() => { handleImageClick(index) }}
@@ -204,7 +217,7 @@ const ListingDetails = (): JSX.Element => {
                           {listing.utilities.map((utility) => (
                             <div key={utility} className="flex items-center gap-2 text-amber-700">
                               <Check className="h-4 w-4" />
-                              <span>{utility}</span>
+                              <span>{formatAmenityLabel(utility)}</span>
                             </div>
                           ))}
                         </div>
@@ -250,7 +263,7 @@ const ListingDetails = (): JSX.Element => {
                         {listing.amenities.map((amenity) => (
                           <div key={amenity} className="flex items-center gap-2 text-amber-700">
                             <Check className="h-4 w-4" />
-                            <span>{amenity}</span>
+                            <span>{formatAmenityLabel(amenity)}</span>
                           </div>
                         ))}
                       </div>
@@ -306,7 +319,7 @@ const ListingDetails = (): JSX.Element => {
                     <div className="space-y-2 text-amber-700">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>{listing.lister.firstName} {listing.lister.lastName}</span>
+                        <span>User</span>
                       </div>
                     </div>
                   </div>
