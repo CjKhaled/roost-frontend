@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Input } from '../../../components/ui/input'
 import { Button } from '../../../components/ui/button'
 import { type SignupFormData, type AuthError } from '../types/auth'
-// import { authService } from '../services/auth';
+import { authService } from '../services/auth'
+import { useAuth } from '../../../context/AuthContext'
 
 const SignupPage: React.FC = () => {
-  // const navigate = useNavigate()
+  const { setUser } = useAuth()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
   const [formData, setFormData] = useState<SignupFormData>({
@@ -44,11 +46,10 @@ const SignupPage: React.FC = () => {
 
     const submitForm = async (): Promise<void> => {
       try {
-      // const response = await authService.signup(formData);
-      // localStorage.setItem('token', response.token);
-      // router.push('/dashboard');
-
-        console.log(formData)
+        const response = await authService.signup(formData)
+        const user = response.user
+        setUser(user)
+        navigate('/listings')
       } catch (err) {
         setError(err as AuthError)
       } finally {

@@ -2,18 +2,35 @@ import {
   User,
   MessageSquare,
   Settings,
-  House
+  House,
+  LogOut
 } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '../../../components/ui/dropdown-menu'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../context/AuthContext'
+import { authService } from '../../auth/services/auth'
 
 const ProfileMenu = (): JSX.Element => {
+  const navigate = useNavigate()
+  const { setUser } = useAuth()
+
+  const handleLogout = async (): Promise<void> => {
+    try {
+      await authService.logout()
+      setUser(null)
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
+
   return (
     <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -47,6 +64,15 @@ const ProfileMenu = (): JSX.Element => {
           <span>Settings</span>
         </DropdownMenuItem>
       </Link>
+      <DropdownMenuSeparator className='bg-amber-100' />
+        <DropdownMenuItem
+
+          onClick={handleLogout}
+          className='flex items-center gap-2 hover:bg-amber-50 focus:bg-amber-50 cursor-pointer text-red-600'
+        >
+          <LogOut className='h-4 w-4' />
+          <span>Log Out</span>
+        </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
   )

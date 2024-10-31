@@ -12,7 +12,7 @@ const DashboardLayoutWrapper = () => {
   )
 }
 
-export const profileRoutes: RouteObject[] = [
+export const menuRoutes: RouteObject[] = [
   {
     element: <DashboardLayoutWrapper />,
     children: [

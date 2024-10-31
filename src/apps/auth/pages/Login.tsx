@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Input } from '../../../components/ui/input'
 import { Button } from '../../../components/ui/button'
 import { type LoginFormData, type AuthError } from '../types/auth'
-// import { authService } from '../services/auth'
+import { authService } from '../services/auth'
+import { useAuth } from '../../../context/AuthContext'
 
 const LoginPage: React.FC = () => {
-  // const navigate = useNavigate()
+  const { setUser } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
   const [formData, setFormData] = useState<LoginFormData>({
@@ -23,7 +26,6 @@ const LoginPage: React.FC = () => {
     })
   }
 
-  // this will submit to the backend. For now, don't worry about this
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
     setIsLoading(true)
@@ -31,14 +33,15 @@ const LoginPage: React.FC = () => {
 
     const submitForm = async (): Promise<void> => {
       try {
-        // const response = await authService.login(formData);
-        // localStorage.setItem('token', response.token);
-        // navigate('/dashboard');
-        console.log(formData)
+        const response = await authService.login(formData)
+        const user = response.user
+        setUser(user)
+        // if they were on a page, navigate them back to it. Otherwise, navigate to listings
+        const from = (location.state as { from?: Location })?.from?.pathname ?? '/listings'
+        navigate(from)
       } catch (err) {
         setError(err as AuthError)
       } finally {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
         setIsLoading(false)
       }
     }
