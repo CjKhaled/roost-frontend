@@ -34,24 +34,24 @@ interface ListingFormProps {
 }
 
 const amenitiesList: AmenityType[] = [
-  'WiFi',
-  'Parking',
-  'Laundry',
-  'Dishwasher',
-  'Gym',
-  'Pool',
-  'Study Room',
-  'Trash Pickup',
-  'Cable TV',
-  'Electric Vehicle Charging'
+  'WIFI',
+  'PARKING',
+  'LAUNDRY',
+  'DISHWASHER',
+  'GYM',
+  'POOL',
+  'STUDY_ROOM',
+  'TRASH_PICKUP',
+  'CABLE_TV',
+  'EV_CHARGING'
 ]
 
 const utilitiesList: UtilityType[] = [
-  'Electricity',
-  'Water',
-  'Gas',
-  'Sewer',
-  'Pest Control'
+  'ELECTRICITY',
+  'WATER',
+  'GAS',
+  'SEWER',
+  'PEST_CONTROL'
 ]
 
 const policiesList = [
@@ -74,58 +74,111 @@ const emptyFormValues = {
   bedCount: '',
   bathCount: '',
   imageUrl: [''],
-  amenities: [],
-  utilities: [],
-  policies: {
-    strictParking: false,
-    strictNoisePolicy: false,
-    guestsAllowed: false,
-    petsAllowed: false,
-    smokingAllowed: false
-  },
+  amenities: [] as AmenityType[],
+  utilities: [] as UtilityType[],
+  strictParking: false,
+  strictNoisePolicy: false,
+  guestsAllowed: false,
+  petsAllowed: false,
+  smokingAllowed: false,
   available: {
     from: '',
     to: ''
   }
 }
 
+interface ListingFormData {
+  name: string
+  description: string
+  address: string
+  location: {
+    lat: string | number
+    lng: string | number
+  }
+  price: string | number
+  bedCount: string | number
+  bathCount: string | number
+  imageUrl: string[]
+  amenities: AmenityType[]
+  utilities: UtilityType[]
+  strictParking: boolean
+  strictNoisePolicy: boolean
+  guestsAllowed: boolean
+  petsAllowed: boolean
+  smokingAllowed: boolean
+  available: {
+    from: string
+    to: string
+  }
+}
+
 const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFormProps) => {
-  const form = useForm<Partial<Listing>>({
-    // @ts-expect-error: don't worry about this
+  const form = useForm<ListingFormData>({
     defaultValues: emptyFormValues
   })
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
-      // Reset form with initial data for edit mode
       form.reset({
         ...initialData,
+        price: initialData.price.toString(),
+        bedCount: initialData.bedCount.toString(),
+        bathCount: initialData.bathCount.toString(),
+        location: {
+          lat: initialData.location.lat.toString(),
+          lng: initialData.location.lng.toString()
+        },
+        strictParking: initialData.policies.strictParking,
+        strictNoisePolicy: initialData.policies.strictNoisePolicy,
+        guestsAllowed: initialData.policies.guestsAllowed,
+        petsAllowed: initialData.policies.petsAllowed,
+        smokingAllowed: initialData.policies.smokingAllowed,
         available: {
           from: initialData.available.from,
           to: initialData.available.to
         },
         imageUrl: initialData.imageUrl,
-        amenities: initialData.amenities || [],
-        utilities: initialData.utilities || [],
-        policies: initialData.policies || {}
+        amenities: initialData.amenities,
+        utilities: initialData.utilities
       })
-    } else if (mode === 'create') {
-      // @ts-expect-error: don't worry about this
+    } else {
       form.reset(emptyFormValues)
     }
   }, [mode, initialData, form, isOpen])
 
-  const handleSubmit = (data: Partial<Listing>) => {
-    onSubmit({
-      ...data,
+  const handleSubmit = (data: ListingFormData) => {
+    const transformedData = {
+      name: data.name,
+      description: data.description,
+      bedCount: parseInt(data.bedCount?.toString() ?? '0'),
+      bathCount: parseInt(data.bathCount?.toString() ?? '0'),
+      address: data.address,
+      price: parseFloat(data.price?.toString() ?? '0'),
       location: {
         lat: parseFloat(data.location?.lat?.toString() ?? '0'),
         lng: parseFloat(data.location?.lng?.toString() ?? '0')
       },
-      price: parseFloat(data.price?.toString() ?? '0'),
-      bedCount: parseInt(data.bedCount?.toString() ?? '0'),
-      bathCount: parseInt(data.bathCount?.toString() ?? '0')
-    })
+      available: {
+        from: data.available?.from,
+        to: data.available?.to
+      },
+      imageUrl: Array.isArray(data.imageUrl)
+        ? data.imageUrl
+        : data.imageUrl
+          ? [data.imageUrl]
+          : [],
+      amenities: data.amenities ?? [],
+      utilities: data.utilities ?? [],
+      policies: {
+        strictParking: data.strictParking,
+        strictNoisePolicy: data.strictNoisePolicy,
+        guestsAllowed: data.guestsAllowed,
+        petsAllowed: data.petsAllowed,
+        smokingAllowed: data.smokingAllowed
+      }
+    }
+
+    onSubmit(transformedData)
     onClose()
   }
 
@@ -136,7 +189,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="form-dialog">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? 'Create New Listing' : 'Edit Listing'}
@@ -321,7 +374,16 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                 <FormItem>
                   <FormLabel>Image URL</FormLabel>
                   <FormControl>
-                    <Input {...field} required />
+                    <Input
+                      {...field}
+                      required
+                      onChange={(e) => {
+                        // Convert single URL to array before setting value
+                        field.onChange([e.target.value])
+                      }}
+                      // Display first URL from array if it exists
+                      value={Array.isArray(field.value) ? field.value[0] : field.value}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -350,7 +412,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                           />
                         </FormControl>
                         <FormLabel className="text-sm font-normal">
-                          {amenity}
+                          {amenity.replace(/_/g, ' ')}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -398,13 +460,11 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                   <FormField
                     key={key}
                     control={form.control}
-                    // @ts-expect-error: don't worry about this
-                    name={`policies.${key}`}
+                    name={key as any}
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
                           <Switch
-                            // @ts-expect-error: don't worry about this
                             checked={field.value ?? false}
                             onCheckedChange={field.onChange}
                           />

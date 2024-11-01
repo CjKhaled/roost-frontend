@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Plus,
   Pencil,
@@ -31,81 +31,40 @@ import {
 } from '../../../components/ui/dialog'
 import ListingForm from '../components/ListingForm'
 import { type Listing } from '../../listings/types/listing'
-
-// Sample data for preview
-const sampleListings: Listing[] = [
-  {
-    id: '1',
-    name: 'Modern Downtown Apartment',
-    address: '123 Main St, Cityville',
-    location: { lat: 40.7128, lng: -74.0060 },
-    price: 1500,
-    available: {
-      from: '2024-08-01',
-      to: '2025-07-31'
-    },
-    imageUrl: [
-      'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'
-    ],
-    description: 'Modern apartment in the heart of downtown with great amenities.',
-    amenities: ['WiFi', 'Parking', 'Laundry'],
-    utilities: ['Water', 'Electricity'],
-    policies: {
-      petsAllowed: true,
-      smokingAllowed: false,
-      guestsAllowed: true
-    },
-    bedCount: 2,
-    bathCount: 1,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-    lister: {
-      id: '1',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com'
-    }
-  },
-  {
-    id: '2',
-    name: 'Cozy Studio near Campus',
-    address: '456 College Ave, Edutown',
-    location: { lat: 40.7282, lng: -73.9942 },
-    price: 900,
-    available: {
-      from: '2024-09-01',
-      to: '2025-08-31'
-    },
-    imageUrl: [
-      'https://www.decorilla.com/online-decorating/wp-content/uploads/2020/07/Sleek-and-transitional-modern-apartment-design-scaled.jpg'
-    ],
-    description: 'Perfect studio apartment for students, close to campus.',
-    amenities: ['WiFi', 'Study Room', 'Gym'],
-    utilities: ['Water', 'Electricity', 'Gas'],
-    policies: {
-      strictNoisePolicy: true,
-      guestsAllowed: true,
-      smokingAllowed: false
-    },
-    bedCount: 1,
-    bathCount: 1,
-    createdAt: new Date('2024-02-01'),
-    updatedAt: new Date('2024-02-01'),
-    lister: {
-      id: '1',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com'
-    }
-  }
-]
+import { listingsService } from '../../listings/services/listing'
+import { useAuth } from '../../../context/AuthContext'
 
 const ManageListings = () => {
-  const [listings, setListings] = useState<Listing[]>(sampleListings)
+  const [listings, setListings] = useState<Listing[]>([])
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (user?.id) {
+      void fetchUserListings()
+    }
+  }, [user?.id])
+
+  const fetchUserListings = async () => {
+    if (!user?.id) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+      const fetchedListings = await listingsService.getUserListings(user.id)
+      setListings(fetchedListings)
+    } catch (err) {
+      setError('Failed to fetch your listings')
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -115,44 +74,48 @@ const ManageListings = () => {
     }).format(date)
   }
 
-  const handleCreateListing = (data: Partial<Listing>) => {
-    // @ts-expect-error: don't worry about this
-    const newListing: Listing = {
-      ...data,
-      id: String(listings.length + 1),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      lister: {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com'
-      }
+  const handleCreateListing = async (data: Partial<Listing>) => {
+    try {
+      setError(null)
+      const newListing = await listingsService.createListing(data)
+      setListings([...listings, newListing])
+      setIsFormOpen(false)
+    } catch (err) {
+      setError('Failed to create listing')
+      console.error(err)
     }
-
-    setListings([...listings, newListing])
   }
 
-  const handleEditListing = (data: Partial<Listing>) => {
+  const handleEditListing = async (data: Partial<Listing>) => {
     if (!selectedListing) return
 
-    const updatedListing: Listing = {
-      ...selectedListing,
-      ...data,
-      updatedAt: new Date()
+    try {
+      setError(null)
+      const updatedListing = await listingsService.updateListing(selectedListing.id, data)
+      setListings(listings.map(listing =>
+        listing.id === selectedListing.id ? updatedListing : listing
+      ))
+      setIsFormOpen(false)
+      setSelectedListing(null)
+    } catch (err) {
+      setError('Failed to update listing')
+      console.error(err)
     }
-
-    setListings(listings.map(listing =>
-      listing.id === selectedListing.id ? updatedListing : listing
-    ))
   }
 
-  const handleDeleteListing = () => {
+  const handleDeleteListing = async () => {
     if (!selectedListing) return
 
-    setListings(listings.filter(listing => listing.id !== selectedListing.id))
-    setIsDeleteDialogOpen(false)
-    setSelectedListing(null)
+    try {
+      setError(null)
+      await listingsService.deleteListing(selectedListing.id)
+      setListings(listings.filter(listing => listing.id !== selectedListing.id))
+      setIsDeleteDialogOpen(false)
+      setSelectedListing(null)
+    } catch (err) {
+      setError('Failed to delete listing')
+      console.error(err)
+    }
   }
 
   const openCreateForm = () => {
@@ -165,6 +128,22 @@ const ManageListings = () => {
     setFormMode('edit')
     setSelectedListing(listing)
     setIsFormOpen(true)
+  }
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50'>
+        <div className='text-amber-600'>Loading listings...</div>
+      </div>
+    )
+  }
+
+  if (error !== null) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50'>
+        <div className='text-red-600'>{error}</div>
+      </div>
+    )
   }
 
   return (

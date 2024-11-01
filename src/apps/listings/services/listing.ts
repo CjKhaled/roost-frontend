@@ -8,6 +8,18 @@ interface ListingResponse {
   listing: APIListing
 }
 
+interface User {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  createdListings: Array<{ id: string }>
+}
+
+interface UserResponse {
+  user: User
+}
+
 export const transformAPIListing = (apiListing: APIListing): Listing => {
   return {
     id: apiListing.id,
@@ -76,6 +88,136 @@ export class ListingsService {
       return transformAPIListing(data.listing)
     } catch (error) {
       console.error('Error fetching listing:', error)
+      throw error
+    }
+  }
+
+  async createListing (listing: Partial<Listing>): Promise<Listing> {
+    try {
+      const response = await fetch(`${this.API_URL}/listings/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: listing.name,
+          description: listing.description,
+          bedCount: listing.bedCount,
+          bathCount: listing.bathCount,
+          address: listing.address,
+          price: listing.price,
+          location: {
+            lat: listing.location?.lat,
+            lng: listing.location?.lng
+          },
+          available: {
+            from: listing.available?.from,
+            to: listing.available?.to
+          },
+          imageUrl: listing.imageUrl,
+          amenities: listing.amenities,
+          utilities: listing.utilities,
+          policies: listing.policies
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        console.log(error)
+        throw new Error('Failed to create listing')
+      }
+
+      const data = await response.json() as { listing: APIListing }
+      return transformAPIListing(data.listing)
+    } catch (error) {
+      console.error('Error creating listing:', error)
+      throw error
+    }
+  }
+
+  async updateListing (id: string, listing: Partial<Listing>): Promise<Listing> {
+    try {
+      const response = await fetch(`${this.API_URL}/listings/update/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: listing.name,
+          description: listing.description,
+          bedCount: listing.bedCount,
+          bathCount: listing.bathCount,
+          address: listing.address,
+          price: listing.price,
+          location: {
+            lat: listing.location?.lat,
+            lng: listing.location?.lng
+          },
+          available: {
+            from: listing.available?.from,
+            to: listing.available?.to
+          },
+          imageUrl: listing.imageUrl,
+          amenities: listing.amenities,
+          utilities: listing.utilities,
+          policies: listing.policies
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update listing')
+      }
+
+      const data = await response.json() as { listing: APIListing }
+      return transformAPIListing(data.listing)
+    } catch (error) {
+      console.error('Error updating listing:', error)
+      throw error
+    }
+  }
+
+  async deleteListing (id: string): Promise<Listing> {
+    try {
+      const response = await fetch(`${this.API_URL}/listings/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete listing')
+      }
+
+      const data = await response.json() as { listing: APIListing }
+      return transformAPIListing(data.listing)
+    } catch (error) {
+      console.error('Error deleting listing:', error)
+      throw error
+    }
+  }
+
+  async getUserListings (userId: string): Promise<Listing[]> {
+    try {
+      // First get the user's created listings
+      const userResponse = await fetch(`${this.API_URL}/users/${userId}`, {
+        credentials: 'include'
+      })
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user data')
+      }
+
+      const userData = await userResponse.json() as UserResponse
+      const listingIds = userData.user.createdListings.map(listing => listing.id)
+
+      // Then fetch full listing details for each listing
+      const listingPromises = listingIds.map(async id => await this.getListingById(id))
+      const listings = await Promise.all(listingPromises)
+
+      return listings
+    } catch (error) {
+      console.error('Error fetching user listings:', error)
       throw error
     }
   }
