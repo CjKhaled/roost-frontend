@@ -30,3 +30,6 @@ Ensure that the backend server is running on your machine, then start the fronte
 2. Make your changes.
 3. Run npm run lint to ensure your code adheres to formatting guidelines.
 4. Submit a pull request.
+
+## Troubleshooting
+In order to access the API, you need to be logged in. Either sign up to create an account, or login to an existing one you've made. This will only work if you have the server running on your local machine.
