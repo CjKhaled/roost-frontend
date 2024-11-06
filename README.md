@@ -19,12 +19,10 @@ Create a new branch based on the type of work you're doing:
 - For new features or issues: `feature/feature_name`
 
 ### 3. Installation
-Install project dependencies by running the appropriate install command:
-npm install
+Install project dependencies by running npm install
 
 ### 4. Starting the Frontend Server
-Ensure that the backend server is running on your machine, then start the frontend server:
-npm run dev
+Ensure that the backend server is running on your machine, then start the frontend server with npm run dev
 
 ## Development Workflow
 
