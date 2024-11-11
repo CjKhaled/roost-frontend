@@ -20,21 +20,21 @@ const App = (): JSX.Element => {
   useEffect(() => {
     if (socket) {
       socket.on('recieveMessage', (message) => {
-        console.log("Message recieved: ", message)
+        console.log('Message recieved: ', message)
       })
       socket.on('typing', (data) => {
         console.log(`${data.username} is typing...`)
       })
       socket.on('disconnect', () => {
-        console.log("Disconnected from server")
+        console.log('Disconnected from server')
       })
     }
   }, [socket])
 
-  const sendMessage = (message: string) => {
+  const sendMessage = () => {
     if (socket) {
       socket.emit('sendMessage', {
-        text: message,
+        text: 'some message',
         userId: 'SOME_USER_ID'
       })
     }
