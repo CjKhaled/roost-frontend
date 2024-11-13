@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/button'
 import { type SignupFormData, type AuthError } from '../types/auth'
 import { authService } from '../services/auth'
 import { useAuth } from '../../../context/AuthContext'
+import { validateEmail, validateName, validatePassword } from '../services/validation'
 
 const SignupPage: React.FC = () => {
   const { setUser } = useAuth()
@@ -20,21 +21,48 @@ const SignupPage: React.FC = () => {
     firstName: '',
     lastName: ''
   })
+  const [fieldErrors, setFieldErrors] = useState<Record<keyof SignupFormData, string | null>>({
+    email: null,
+    password: null,
+    confirmPassword: null,
+    firstName: null,
+    lastName: null
+  })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: null
+    }))
   }
 
-  // add more validations later
   const validateForm = (): boolean => {
+    const emailError = validateEmail(formData.email)
+    const passwordError = validatePassword(formData.password)
+    const firstNameError = validateName(formData.firstName, 'first name')
+    const lastNameError = validateName(formData.lastName, 'last name')
+    let confirmPasswordError: string | null = null
+
     if (formData.password !== formData.confirmPassword) {
-      setError({ message: 'Passwords do not match' })
-      return false
+      confirmPasswordError = 'Passwords do not match'
     }
-    return true
+
+    const newFieldErrors = {
+      email: emailError,
+      password: passwordError,
+      confirmPassword: confirmPasswordError,
+      firstName: firstNameError,
+      lastName: lastNameError
+    }
+
+    setFieldErrors(newFieldErrors)
+    return !Object.values(newFieldErrors).some(error => error !== null)
   }
 
   const handleSubmit = (e: React.FormEvent): void => {
@@ -74,52 +102,74 @@ const SignupPage: React.FC = () => {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className='space-y-4'>
-            {(error != null) && (
+        <form onSubmit={handleSubmit} className='space-y-4'>
+            {error && (
               <div className='text-red-500 text-sm text-center'>
                 {error.message}
               </div>
             )}
             <div className='grid grid-cols-2 gap-4'>
-              <Input
-                name='firstName'
-                placeholder='First Name'
-                onChange={handleChange}
-                className='roost-input'
-                required
-              />
-              <Input
-                name='lastName'
-                placeholder='Last Name'
-                onChange={handleChange}
-                className='roost-input'
-                required
-              />
+              <div className='space-y-1'>
+                <Input
+                  name='firstName'
+                  placeholder='First Name'
+                  onChange={handleChange}
+                  className={`roost-input ${fieldErrors.firstName ? 'border-red-500' : ''}`}
+
+                />
+                {fieldErrors.firstName && (
+                  <p className='text-red-500 text-sm'>{fieldErrors.firstName}</p>
+                )}
+              </div>
+              <div className='space-y-1'>
+                <Input
+                  name='lastName'
+                  placeholder='Last Name'
+                  onChange={handleChange}
+                  className={`roost-input ${fieldErrors.lastName ? 'border-red-500' : ''}`}
+
+                />
+                {fieldErrors.lastName && (
+                  <p className='text-red-500 text-sm'>{fieldErrors.lastName}</p>
+                )}
+              </div>
             </div>
-            <Input
-              type='email'
-              name='email'
-              placeholder='Email'
-              onChange={handleChange}
-              className='roost-input'
-              required
-            />
-            <Input
-              type='password'
-              name='password'
-              placeholder='Password'
-              onChange={handleChange}
-              className='roost-input'
-              required
-            />
-            <Input
-              type='password'
-              name='confirmPassword'
-              placeholder='Confirm Password'
-              onChange={handleChange}
-              className='roost-input'
-              required
-            />
+            <div className='space-y-1'>
+              <Input
+                type='email'
+                name='email'
+                placeholder='Email'
+                onChange={handleChange}
+                className={`roost-input ${fieldErrors.email ? 'border-red-500' : ''}`}
+              />
+              {fieldErrors.email && (
+                <p className='text-red-500 text-sm'>{fieldErrors.email}</p>
+              )}
+            </div>
+            <div className='space-y-1'>
+              <Input
+                type='password'
+                name='password'
+                placeholder='Password'
+                onChange={handleChange}
+                className={`roost-input ${fieldErrors.password ? 'border-red-500' : ''}`}
+              />
+              {fieldErrors.password && (
+                <p className='text-red-500 text-sm'>{fieldErrors.password}</p>
+              )}
+            </div>
+            <div className='space-y-1'>
+              <Input
+                type='password'
+                name='confirmPassword'
+                placeholder='Confirm Password'
+                onChange={handleChange}
+                className={`roost-input ${fieldErrors.confirmPassword ? 'border-red-500' : ''}`}
+              />
+              {fieldErrors.confirmPassword && (
+                <p className='text-red-500 text-sm'>{fieldErrors.confirmPassword}</p>
+              )}
+            </div>
             <Button
               type='submit'
               className='w-full roost-button'

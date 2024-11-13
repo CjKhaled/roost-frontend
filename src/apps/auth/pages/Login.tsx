@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/button'
 import { type LoginFormData, type AuthError } from '../types/auth'
 import { authService } from '../services/auth'
 import { useAuth } from '../../../context/AuthContext'
+import { validateEmail, validatePassword } from '../services/validation'
 
 const LoginPage: React.FC = () => {
   const { setUser } = useAuth()
@@ -18,16 +19,41 @@ const LoginPage: React.FC = () => {
     email: '',
     password: ''
   })
+  const [fieldErrors, setFieldErrors] = useState<Record<keyof LoginFormData, string | null>>({
+    email: null,
+    password: null
+  })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: null
+    }))
+  }
+
+  const validateForm = (): boolean => {
+    const emailError = validateEmail(formData.email)
+    const passwordError = validatePassword(formData.password)
+
+    const newFieldErrors = {
+      email: emailError,
+      password: passwordError
+    }
+
+    setFieldErrors(newFieldErrors)
+    return !emailError && !passwordError
   }
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
+    if (!validateForm()) return
+
     setIsLoading(true)
     setError(null)
 
@@ -62,28 +88,36 @@ const LoginPage: React.FC = () => {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className='space-y-4'>
-            {(error != null) && (
+        <form onSubmit={handleSubmit} className='space-y-4'>
+            {error && (
               <div className='text-red-500 text-sm text-center'>
                 {error.message}
               </div>
             )}
-            <Input
-              type='email'
-              name='email'
-              placeholder='Email'
-              onChange={handleChange}
-              className='roost-input'
-              required
-            />
-            <Input
-              type='password'
-              name='password'
-              placeholder='Password'
-              onChange={handleChange}
-              className='roost-input'
-              required
-            />
+            <div className='space-y-1'>
+              <Input
+                type='text'
+                name='email'
+                placeholder='Email'
+                onChange={handleChange}
+                className={`roost-input ${fieldErrors.email ? 'border-red-500' : ''}`}
+              />
+              {fieldErrors.email && (
+                <p className='text-red-500 text-sm'>{fieldErrors.email}</p>
+              )}
+            </div>
+            <div className='space-y-1'>
+              <Input
+                type='password'
+                name='password'
+                placeholder='Password'
+                onChange={handleChange}
+                className={`roost-input ${fieldErrors.password ? 'border-red-500' : ''}`}
+              />
+              {fieldErrors.password && (
+                <p className='text-red-500 text-sm'>{fieldErrors.password}</p>
+              )}
+            </div>
             <Button
               type='submit'
               className='w-full roost-button'
