@@ -69,7 +69,7 @@ class AuthService {
     try {
       const response = await fetch(`${this.API_URL}/logout`, {
         method: 'GET',
-        credentials: 'include' // Important for cookies
+        credentials: 'include'
       })
 
       if (!response.ok) {

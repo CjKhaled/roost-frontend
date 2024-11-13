@@ -136,7 +136,7 @@ const SignupPage: React.FC = () => {
             </div>
             <div className='space-y-1'>
               <Input
-                type='email'
+                type='text'
                 name='email'
                 placeholder='Email'
                 onChange={handleChange}
