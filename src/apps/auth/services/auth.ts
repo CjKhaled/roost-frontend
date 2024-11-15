@@ -1,21 +1,21 @@
 import { type LoginFormData, type SignupFormData, type AuthResponse } from '../types/auth'
 
-// Define the shape of API error responses
 interface ApiError {
   message: string
   statusCode?: number
 }
 
 class AuthService {
-  private readonly API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'
+  private readonly API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'
 
   async login (data: LoginFormData): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${this.API_URL}/auth/login`, {
+      const response = await fetch(`${this.API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(data)
       })
 
@@ -36,13 +36,17 @@ class AuthService {
   }
 
   async signup (data: SignupFormData): Promise<AuthResponse> {
+    // Remove confirmPassword as it's not needed in the API
+    const { confirmPassword, ...apiData } = data
+
     try {
-      const response = await fetch(`${this.API_URL}/auth/signup`, {
+      const response = await fetch(`${this.API_URL}/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        credentials: 'include',
+        body: JSON.stringify(apiData)
       })
 
       if (!response.ok) {
@@ -58,6 +62,21 @@ class AuthService {
         throw authError
       }
       throw new Error('Signup failed')
+    }
+  }
+
+  async logout (): Promise<void> {
+    try {
+      const response = await fetch(`${this.API_URL}/logout`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Logout failed')
+      }
+    } catch (error) {
+      throw new Error('Logout failed')
     }
   }
 }
