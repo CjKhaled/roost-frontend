@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Search,
   Leaf
 } from 'lucide-react'
 import { Input } from '../../../components/ui/input'
 
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import FilterPopover from '../components/FilterPopover'
 import { type DateRange } from 'react-day-picker'
 import ListingCard from '../components/ListingCard'
 import ProfileMenu from '../components/ProfileMenu'
 import { type Listing, type AmenityType } from '../types/listing'
 import { listingsService } from '../services/listing'
+import MapContent from '../components/MapContent'
 
 interface FilterState {
   price: number
@@ -28,6 +29,8 @@ const Listings = (): JSX.Element => {
   const [filteredListings, setFilteredListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedListing, setSelectedListing] = useState<string | null>(null)
+  const listingsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -45,6 +48,16 @@ const Listings = (): JSX.Element => {
 
     void fetchListings()
   }, [])
+
+  const handleListingClick = (listing: Listing) => {
+    setSelectedListing(listing.id)
+  }
+
+  const handlePinClick = (listing: Listing) => {
+    setSelectedListing(listing.id)
+    const targetCard = listingsRef.current?.querySelector(`[data-listing-id="${listing.id}"]`)
+    targetCard?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const handleFiltersChange = (newFilters: FilterState) => {
     const filtered = listings.filter(listing => {
@@ -109,10 +122,10 @@ const Listings = (): JSX.Element => {
       {/* Split View */}
       <div className='flex-1 flex overflow-hidden'>
         {/* Listings Panel */}
-        <div className='w-1/4 overflow-y-auto p-6 border-r'>
+        <div className='w-1/4 overflow-y-auto p-6 border-r' ref={listingsRef}>
           <div className='grid grid-cols-1 gap-6'>
             {filteredListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+              <ListingCard key={listing.id} listing={listing} isSelected={selectedListing === listing.id} onClick={() => { handleListingClick(listing) }} />
             ))}
           </div>
         </div>
@@ -121,12 +134,8 @@ const Listings = (): JSX.Element => {
         <div className='w-3/4 bg-amber-50'>
           <div className='h-full flex items-center justify-center text-amber-700'>
             <APIProvider apiKey={MAPS_API_KEY}>
-              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER}>
-                {filteredListings.map((listing) => (
-                  <AdvancedMarker key={listing.id} position={{ lat: listing.location.lat, lng: listing.location.lng }}>
-                    <Pin background='#b45309' />
-                  </AdvancedMarker>
-                ))}
+              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true}>
+                <MapContent listings={filteredListings} selectedListing={selectedListing} onPinClick={handlePinClick} />
               </Map>
             </APIProvider>
           </div>
