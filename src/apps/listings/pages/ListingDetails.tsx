@@ -43,6 +43,8 @@ const ListingDetails = (): JSX.Element => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
+  const [lister, setLister] = useState<{ firstName: string; lastName: string } | null>(null)
+  const [isListerLoading, setIsListerLoading] = useState<boolean>(true)
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -65,6 +67,25 @@ const ListingDetails = (): JSX.Element => {
     void fetchListing()
   }, [id, navigate])
 
+  useEffect(() => {
+    // Only fetch lister data if listing is defined
+    if (!listing) return
+  
+    const fetchLister = async () => {
+      try {
+        console.log(listing.listerId)
+        const listerData = await listingsService.getUserByID(listing.listerId) // Use the service to fetch lister data
+        setLister(listerData)
+      } catch (error) {
+        console.error('Failed to fetch lister', error);
+      } finally {
+        setIsListerLoading(false);
+      }
+    }
+  
+    fetchLister();
+  }, [listing]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50">
@@ -80,6 +101,7 @@ const ListingDetails = (): JSX.Element => {
       </div>
     )
   }
+
 
   const formatDateRange = (from: string, to: string): string => {
     const fromDate = new Date(from)
@@ -317,10 +339,16 @@ const ListingDetails = (): JSX.Element => {
                   <div className="pt-4 border-t border-amber-200">
                     <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
                     <div className="space-y-2 text-amber-700">
+                    {isListerLoading ? (
+                      <div>Loading...</div>
+                    ) : lister ? (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>User</span>
+                        <span>{`${lister.firstName} ${lister.lastName}`}</span>
                       </div>
+                    ) : (
+                      <div>Lister not found</div>
+                    )}
                     </div>
                   </div>
 

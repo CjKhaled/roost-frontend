@@ -92,6 +92,23 @@ export class ListingsService {
     }
   }
 
+  async getUserByID (listerID: string): Promise<{ firstName: string; lastName: string }> {
+    try{
+      const response = await fetch(`${this.API_URL}/users/${listerID}`, {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        throw new Error('Failed to fetch lister');
+      }
+      const { user } = await response.json(); // Destructure the `user` object
+      console.log(user)
+      return user
+    } catch(error){
+      console.error('Error fetching user:', error)
+      throw error
+    }
+  }
+
   async createListing (listing: Partial<Listing>): Promise<Listing> {
     try {
       const response = await fetch(`${this.API_URL}/listings/create`, {
