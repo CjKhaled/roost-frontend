@@ -353,7 +353,12 @@ const ListingDetails = (): JSX.Element => {
                   </div>
 
                   <div className="space-y-3">
-                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                    <Button 
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                      onClick={()=>{
+                        navigate('/messages')
+                      }}
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Message
                     </Button>
