@@ -150,7 +150,15 @@ const ListingDetails = (): JSX.Element => {
               <Button
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
-                onClick={() => { setIsFavorited(!isFavorited) }}
+                onClick={() => { 
+                  const favorites = JSON.parse(localStorage.getItem('favoritedListings') || '[]')
+                  const updatedFavorites = isFavorited
+                    ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
+                    : [...favorites, listing.id]
+                    localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
+                  setIsFavorited(!isFavorited) 
+                  console.log(localStorage.getItem('favoritedListings'))
+                }}
               >
                 <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
                 {isFavorited ? 'Saved' : 'Save'}
