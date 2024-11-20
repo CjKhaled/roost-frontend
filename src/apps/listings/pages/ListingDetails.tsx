@@ -70,21 +70,21 @@ const ListingDetails = (): JSX.Element => {
   useEffect(() => {
     // Only fetch lister data if listing is defined
     if (!listing) return
-  
+
     const fetchLister = async () => {
       try {
         console.log(listing.listerId)
         const listerData = await listingsService.getUserByID(listing.listerId) // Use the service to fetch lister data
         setLister(listerData)
       } catch (error) {
-        console.error('Failed to fetch lister', error);
+        console.error('Failed to fetch lister', error)
       } finally {
-        setIsListerLoading(false);
+        setIsListerLoading(false)
       }
     }
-  
-    fetchLister();
-  }, [listing]);
+
+    void fetchLister()
+  }, [listing])
 
   if (isLoading) {
     return (
@@ -101,7 +101,6 @@ const ListingDetails = (): JSX.Element => {
       </div>
     )
   }
-
 
   const formatDateRange = (from: string, to: string): string => {
     const fromDate = new Date(from)
@@ -150,13 +149,13 @@ const ListingDetails = (): JSX.Element => {
               <Button
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
-                onClick={() => { 
-                  const favorites = JSON.parse(localStorage.getItem('favoritedListings') || '[]')
+                onClick={() => {
+                  const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
                   const updatedFavorites = isFavorited
                     ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
                     : [...favorites, listing.id]
-                    localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
-                  setIsFavorited(!isFavorited) 
+                  localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
+                  setIsFavorited(!isFavorited)
                   console.log(localStorage.getItem('favoritedListings'))
                 }}
               >
@@ -347,23 +346,27 @@ const ListingDetails = (): JSX.Element => {
                   <div className="pt-4 border-t border-amber-200">
                     <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
                     <div className="space-y-2 text-amber-700">
-                    {isListerLoading ? (
+                    {isListerLoading
+                      ? (
                       <div>Loading...</div>
-                    ) : lister ? (
+                        )
+                      : lister
+                        ? (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span>{`${lister.firstName} ${lister.lastName}`}</span>
                       </div>
-                    ) : (
+                          )
+                        : (
                       <div>Lister not found</div>
-                    )}
+                          )}
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <Button 
+                    <Button
                       className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                      onClick={()=>{
+                      onClick={() => {
                         navigate('/messages')
                       }}
                     >
