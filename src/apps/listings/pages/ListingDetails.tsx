@@ -85,20 +85,10 @@ const ListingDetails = (): JSX.Element => {
     void fetchLister()
   }, [listing])
 
-  useEffect(() => {
-    // Only fetch lister data if listing is defined
+  useEffect(()=>{
     if (!listing) return
-    const fetchLister = async () => {
-      try {
-        const listerData = await listingsService.getUserByID(listing.listerId) // Use the service to fetch lister data
-        setLister(listerData)
-      } catch (error) {
-        console.error('Failed to fetch lister', error)
-      } finally {
-        setIsListerLoading(false)
-      }
-    }
-    void fetchLister()
+    const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
+    if(favorites.includes(listing.id)) setIsFavorited(true)
   }, [listing])
 
   if (isLoading) {
