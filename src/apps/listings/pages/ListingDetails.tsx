@@ -73,7 +73,6 @@ const ListingDetails = (): JSX.Element => {
 
     const fetchLister = async () => {
       try {
-        console.log(listing.listerId)
         const listerData = await listingsService.getUserByID(listing.listerId) // Use the service to fetch lister data
         setLister(listerData)
       } catch (error) {
@@ -83,6 +82,22 @@ const ListingDetails = (): JSX.Element => {
       }
     }
 
+    void fetchLister()
+  }, [listing])
+
+  useEffect(() => {
+    // Only fetch lister data if listing is defined
+    if (!listing) return
+    const fetchLister = async () => {
+      try {
+        const listerData = await listingsService.getUserByID(listing.listerId) // Use the service to fetch lister data
+        setLister(listerData)
+      } catch (error) {
+        console.error('Failed to fetch lister', error)
+      } finally {
+        setIsListerLoading(false)
+      }
+    }
     void fetchLister()
   }, [listing])
 
@@ -156,7 +171,6 @@ const ListingDetails = (): JSX.Element => {
                     : [...favorites, listing.id]
                   localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
                   setIsFavorited(!isFavorited)
-                  console.log(localStorage.getItem('favoritedListings'))
                 }}
               >
                 <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
