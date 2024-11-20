@@ -85,10 +85,10 @@ const ListingDetails = (): JSX.Element => {
     void fetchLister()
   }, [listing])
 
-  useEffect(()=>{
+  useEffect(() => {
     if (!listing) return
     const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
-    if(favorites.includes(listing.id)) setIsFavorited(true)
+    if (favorites.includes(listing.id)) setIsFavorited(true)
   }, [listing])
 
   if (isLoading) {
