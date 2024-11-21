@@ -28,7 +28,8 @@ import { type Listing, type AmenityType, type UtilityType } from '../../listings
 interface ListingFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: Partial<Listing>) => void
+  onSubmit: (data: Partial<Listing>) => Promise<boolean>
+  error: string | null
   initialData: Listing | null
   mode: 'create' | 'edit'
 }
@@ -112,7 +113,7 @@ interface ListingFormData {
   }
 }
 
-const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFormProps) => {
+const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: ListingFormProps) => {
   const form = useForm<ListingFormData>({
     defaultValues: emptyFormValues
   })
@@ -146,7 +147,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
     }
   }, [mode, initialData, form, isOpen])
 
-  const handleSubmit = (data: ListingFormData) => {
+  const handleSubmit = async (data: ListingFormData) => {
     const transformedData = {
       name: data.name,
       description: data.description,
@@ -177,9 +178,9 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
         smokingAllowed: data.smokingAllowed
       }
     }
-
-    onSubmit(transformedData)
-    onClose()
+    const submitSuccess = await onSubmit(transformedData)
+    console.log('submitSuccess', submitSuccess)
+    if (submitSuccess) onClose()
   }
 
   const formatDate = (date: Date | undefined): string => {
@@ -476,7 +477,11 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                 ))}
               </div>
             </div>
-
+            {error && (
+              <div className="bottom-0 left-0 right-0 p-4 bg-red-100 text-red-600 text-center">
+                {error}
+              </div>
+            )}
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
