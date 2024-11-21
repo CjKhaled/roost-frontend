@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useSocket } from '../../context/SocketContext' // Adjust the import path as needed
+import { useSocket } from '../../context/SocketContext'
 import { useAuth } from '../../context/AuthContext'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '../../components/ui/dialog'
+import { Button } from '../../components/ui/button'
+import { X } from 'lucide-react'
 
 interface Message {
   id: string
@@ -14,11 +23,15 @@ interface Message {
 interface ChatComponentProps {
   conversationId: string
   recipientId: string // ID of the user you are chatting with
+  isOpen: boolean
+  onClose: () => void
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
   conversationId,
-  recipientId
+  recipientId,
+  isOpen,
+  onClose
 }) => {
   const socket = useSocket()
   const { user } = useAuth()
@@ -31,9 +44,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   useEffect(() => {
     if (!socket || !user) return
 
-    console.log('user.id', user.id)
     socket.emit('userOnline', user.id)
-
     socket.emit('getMessages', conversationId)
 
     socket.on('messages', (msgs: Message[]) => {
@@ -47,7 +58,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     })
 
     socket.on('receiveMessage', (message: Message) => {
-      console.log('receiveMessage', message)
       setMessages((prevMessages) => [...prevMessages, message])
     })
 
@@ -71,7 +81,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     setMessageInput(e.target.value)
 
     if (socket && user) {
-      console.log('recipientId', recipientId)
       socket.emit('typing', { recipientId, username: user.firstName })
 
       if (typingTimeoutRef.current) {
@@ -112,57 +121,58 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   }
 
   return (
-    <div
-      className='chat-container'
-      style={{ border: '1px solid #ccc', padding: '10px' }}
-    >
-      <div
-        className='messages'
-        style={{ maxHeight: '300px', overflowY: 'auto' }}
-      >
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            style={{
-              textAlign: msg.senderId === user?.id ? 'right' : 'left',
-              margin: '5px 0'
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '8px',
-                borderRadius: '10px',
-                backgroundColor: msg.senderId === user?.id ? '#DCF8C6' : '#FFF'
-              }}
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md w-full">
+        <DialogHeader>
+          <DialogTitle>Chat</DialogTitle>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" onClick={onClose} className="absolute right-4 top-4">
+              <X className="w-6 h-6" />
+            </Button>
+          </DialogClose>
+        </DialogHeader>
+        <div className="flex flex-col h-[500px]">
+          <div className="flex-1 overflow-y-auto mb-4">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${
+                  msg.senderId === user?.id ? 'justify-end' : 'justify-start'
+                } mb-2`}
+              >
+                <div
+                  className={`px-4 py-2 rounded-lg ${
+                    msg.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div className="text-sm italic text-gray-500">The user is typing...</div>
+            )}
+          </div>
+          <form onSubmit={handleSubmit} className="flex">
+            <input
+              type="text"
+              disabled={!user}
+              value={messageInput}
+              onChange={handleInputChange}
+              placeholder="Type your message..."
+              className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              disabled={!user}
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600"
             >
-              {msg.content}
-            </span>
-          </div>
-        ))}
-        {isTyping && (
-          <div style={{ fontStyle: 'italic', margin: '5px 0' }}>
-            The user is typing...
-          </div>
-        )}
-      </div>
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', marginTop: '10px' }}
-      >
-        <input
-          type='text'
-          disabled={!user}
-          value={messageInput}
-          onChange={handleInputChange}
-          placeholder='Type your message...'
-          style={{ flex: 1, padding: '8px' }}
-        />
-        <button disabled={!user} type='submit' style={{ padding: '8px' }}>
-          Send
-        </button>
-      </form>
-    </div>
+              Send
+            </button>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

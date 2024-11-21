@@ -32,8 +32,11 @@ import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps
 import { type Listing } from '../types/listing'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
+import { useAuth } from '../../../context/AuthContext'
+import ChatComponent from '../../../components/ui/Chat'
 
 const ListingDetails = (): JSX.Element => {
+  const { user } = useAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [listing, setListing] = useState<Listing | null>(null)
@@ -42,7 +45,18 @@ const ListingDetails = (): JSX.Element => {
   const [isFavorited, setIsFavorited] = useState<boolean>(false)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
+
+  console.log('listerId', listing?.listerId)
+  console.log('user.id', user?.id)
+
+  const conversationId = (userId: string, listerId: string) => {
+    if (userId < listerId) {
+      return `${userId}-${listerId}`
+    }
+    return `${listerId}-${userId}`
+  }
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -325,7 +339,7 @@ const ListingDetails = (): JSX.Element => {
                   </div>
 
                   <div className="space-y-3">
-                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                    <Button onClick={() => { setIsChatOpen(true) }} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Message
                     </Button>
@@ -370,6 +384,14 @@ const ListingDetails = (): JSX.Element => {
           </div>
         </DialogContent>
       </Dialog>
+      {user && listing?.listerId && (
+        <ChatComponent
+          isOpen={isChatOpen}
+          onClose={() => { setIsChatOpen(false) }}
+          conversationId={conversationId(user.id, listing?.listerId)}
+          recipientId={listing?.listerId}
+        />
+      )}
     </div>
   )
 }
