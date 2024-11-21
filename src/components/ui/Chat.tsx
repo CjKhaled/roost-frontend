@@ -31,18 +31,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   useEffect(() => {
     if (!socket || !user) return
 
-    // Emit 'userOnline' event to join the user's own room
     console.log('user.id', user.id)
     socket.emit('userOnline', user.id)
 
-    // Request existing messages
     socket.emit('getMessages', conversationId)
 
-    // Listen for incoming messages
     socket.on('messages', (msgs: Message[]) => {
       setMessages(msgs)
 
-      // Mark unread messages as read
       msgs.forEach((msg) => {
         if (msg.receiverId === user.id && !msg.read) {
           socket.emit('readMessage', { messageId: msg.id })
@@ -50,13 +46,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       })
     })
 
-    // Listen for new messages
     socket.on('receiveMessage', (message: Message) => {
       console.log('receiveMessage', message)
       setMessages((prevMessages) => [...prevMessages, message])
     })
 
-    // Listen for typing indicators
     socket.on('typing', (data: { username: string }) => {
       setIsTyping(true)
     })
@@ -65,7 +59,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       setIsTyping(false)
     })
 
-    // Cleanup on unmount
     return () => {
       socket.off('messages')
       socket.off('receiveMessage')
@@ -78,16 +71,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     setMessageInput(e.target.value)
 
     if (socket && user) {
-      // Emit 'typing' event
       console.log('recipientId', recipientId)
       socket.emit('typing', { recipientId, username: user.firstName })
 
-      // Clear previous timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
       }
 
-      // Set timeout to emit 'stopTyping' after 2 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
         socket.emit('stopTyping', { recipientId })
       }, 2000)
@@ -105,10 +95,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         content: messageInput.trim()
       }
 
-      // Emit 'sendMessage' event
       socket.emit('sendMessage', messageData)
 
-      // Optionally, add the message to your local state
       setMessages((prevMessages) => [
         ...prevMessages,
         {
