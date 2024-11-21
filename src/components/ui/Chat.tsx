@@ -21,14 +21,12 @@ interface Message {
 }
 
 interface ChatComponentProps {
-  conversationId: string
   recipientId: string // ID of the user you are chatting with
   isOpen: boolean
   onClose: () => void
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  conversationId,
   recipientId,
   isOpen,
   onClose
@@ -36,15 +34,41 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const socket = useSocket()
   const { user } = useAuth()
 
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [messageInput, setMessageInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (!socket || !user) return
+    if (!socket || !user || !isOpen) return
+    // Emit 'userOnline' when the component opens
+    socket.emit('userOnline', { userId: user.id, recipientId })
 
-    socket.emit('userOnline', user.id)
+    // Listen for 'conversationId' from the server
+    socket.on('conversationId', (convId: string) => {
+      setConversationId(convId)
+      setIsLoading(false)
+    })
+
+    // Handle errors
+    socket.on('error', (error: { message: string }) => {
+      console.error('Socket error:', error.message)
+      // You can set an error state here if needed
+      setIsLoading(false)
+    })
+
+    return () => {
+      socket.off('conversationId')
+      socket.off('error')
+    }
+  }, [socket, user, recipientId, isOpen])
+
+  useEffect(() => {
+    if (!socket || !user || !conversationId) return
+
+    // Fetch messages when conversationId is available
     socket.emit('getMessages', conversationId)
 
     socket.on('messages', (msgs: Message[]) => {
@@ -96,7 +120,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (messageInput.trim() && socket && user) {
+    if (messageInput.trim() && socket && user && conversationId) {
       const messageData = {
         senderId: user.id,
         receiverId: recipientId,
@@ -110,7 +134,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         ...prevMessages,
         {
           ...messageData,
-          id: 'temp-id',
+          id: 'temp-id-' + Date.now(),
           read: false,
           createdAt: new Date().toISOString()
         }
@@ -118,6 +142,56 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
       setMessageInput('')
     }
+  }
+
+  let content = (
+    <div className="flex flex-col h-[500px]">
+      <div className="flex-1 overflow-y-auto mb-4">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${
+              msg.senderId === user?.id ? 'justify-end' : 'justify-start'
+            } mb-2`}
+          >
+            <div
+              className={`px-4 py-2 rounded-lg ${
+                msg.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              }`}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+        {isTyping && (
+          <div className="text-sm italic text-gray-500">The user is typing...</div>
+        )}
+      </div>
+      <form onSubmit={handleSubmit} className="flex">
+        <input
+          type="text"
+          disabled={!user}
+          value={messageInput}
+          onChange={handleInputChange}
+          placeholder="Type your message..."
+          className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          disabled={!user}
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  )
+  if (isLoading) {
+    content = (
+      <div className="flex items-center justify-center h-64">
+        <div>Loading chat...</div>
+      </div>
+    )
   }
 
   return (
@@ -131,46 +205,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
             </Button>
           </DialogClose>
         </DialogHeader>
-        <div className="flex flex-col h-[500px]">
-          <div className="flex-1 overflow-y-auto mb-4">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${
-                  msg.senderId === user?.id ? 'justify-end' : 'justify-start'
-                } mb-2`}
-              >
-                <div
-                  className={`px-4 py-2 rounded-lg ${
-                    msg.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="text-sm italic text-gray-500">The user is typing...</div>
-            )}
-          </div>
-          <form onSubmit={handleSubmit} className="flex">
-            <input
-              type="text"
-              disabled={!user}
-              value={messageInput}
-              onChange={handleInputChange}
-              placeholder="Type your message..."
-              className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              disabled={!user}
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600"
-            >
-              Send
-            </button>
-          </form>
-        </div>
+        {content}
       </DialogContent>
     </Dialog>
   )
