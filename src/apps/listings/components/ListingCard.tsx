@@ -14,9 +14,11 @@ import { type Listing } from '../types/listing'
 
 interface ListingCardProps {
   listing: Listing
+  isSelected?: boolean
+  onClick?: () => void
 }
 
-const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
+const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps): JSX.Element => {
   const [favorites, setFavorites] = useState(new Set<string>())
   const [hoveredListing, setHoveredListing] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -53,9 +55,11 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
   return (
 
       <Card
-        className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${
-          hoveredListing === listing.id ? 'ring-2 ring-amber-500' : ''
+        data-listing-id={listing.id}
+        className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-amber-500 shadow-lg transform scale-[1.02]' : 'hover:shadow-lg'}
+        ${hoveredListing === listing.id ? 'ring-2 ring-amber-500' : ''
         }`}
+        onClick={onClick}
         onMouseEnter={() => { setHoveredListing(listing.id) }}
         onMouseLeave={() => { setHoveredListing(null) }}
       >
@@ -66,7 +70,13 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
             className='w-full h-48 object-cover'
           />
           <div className='absolute top-4 right-4 flex gap-2'>
-            <Badge className='bg-white/90 text-amber-900 font-medium'>
+            <Badge className={`
+              ${isSelected
+                ? 'bg-amber-600 text-white'
+                : 'bg-white/90 text-amber-900'
+              } 
+              font-medium transition-colors
+            `}>
               ${listing.price}/mo
             </Badge>
             <button
@@ -89,7 +99,11 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
 
         <CardContent className='p-4'>
           <div className='mb-3'>
-            <h3 className='text-lg font-semibold text-amber-900'>{listing.name}</h3>
+            <h3 className={`
+            text-lg font-semibold 
+            ${isSelected ? 'text-amber-700' : 'text-amber-900'}
+            transition-colors
+          `}>{listing.name}</h3>
             <div className='flex items-center text-amber-700 gap-2 text-sm'>
               <MapPin className='h-4 w-4' />
               {listing.address}
@@ -116,7 +130,13 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
               <Badge
                 key={amenity}
                 variant='secondary'
-                className='bg-orange-50 text-amber-700 border border-amber-200/50'
+                className={`
+                  ${isSelected
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-orange-50 text-amber-700'
+                  } 
+                  border border-amber-200/50 transition-colors
+                `}
               >
                 {formatAmenityLabel(amenity)}
               </Badge>
@@ -125,7 +145,14 @@ const ListingCard = ({ listing }: ListingCardProps): JSX.Element => {
         </CardContent>
 
         <CardFooter className='p-4 pt-0'>
-          <Button className='w-full bg-amber-600 hover:bg-amber-700 text-white' onClick={handleClick}>
+          <Button className={`
+            w-full transition-colors
+            ${isSelected
+              ? 'bg-amber-700 hover:bg-amber-800'
+              : 'bg-amber-600 hover:bg-amber-700'
+            } 
+            text-white
+          `} onClick={handleClick}>
             View Details
           </Button>
         </CardFooter>
