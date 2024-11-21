@@ -34,6 +34,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
 import { useAuth } from '../../../context/AuthContext'
 import ChatComponent from '../../../components/ui/Chat'
+import type { Conversation } from '../types/conversation'
 
 const ListingDetails = (): JSX.Element => {
   const { user } = useAuth()
@@ -46,17 +47,9 @@ const ListingDetails = (): JSX.Element => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
-
-  console.log('listerId', listing?.listerId)
-  console.log('user.id', user?.id)
-
-  const conversationId = (userId: string, listerId: string) => {
-    if (userId < listerId) {
-      return `${userId}-${listerId}`
-    }
-    return `${listerId}-${userId}`
-  }
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -78,6 +71,19 @@ const ListingDetails = (): JSX.Element => {
 
     void fetchListing()
   }, [id, navigate])
+
+  useEffect(() => {
+    if (!user || !listing) return
+    const fetchConversations = async () => {
+      try {
+        const data = await listingsService.fetchConversations(user)
+        setConversations(data)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    void fetchConversations()
+  }, [user, listing])
 
   if (isLoading) {
     return (
@@ -122,6 +128,71 @@ const ListingDetails = (): JSX.Element => {
     setCurrentImageIndex(index)
     console.log(currentImageIndex)
     setIsImageModalOpen(true)
+  }
+  let messageButtons = (
+    // If the user is not the lister, show the message button
+    <Button
+      onClick={() => {
+        setSelectedConversation(null) // This indicates a new conversation
+        setIsChatOpen(true)
+      }}
+      className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+    >
+      <MessageCircle className="h-4 w-4 mr-2" />
+      Message
+    </Button>
+  )
+  if (user && listing.listerId === user.id) {
+    if (conversations.length > 0) {
+      const conversationsUI = conversations.map((conversation) => (
+        <Button
+          key={conversation.id}
+          onClick={() => {
+            setSelectedConversation(conversation)
+            setIsChatOpen(true)
+          }}
+          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+        >
+          <MessageCircle className="h-4 w-4 mr-2" />
+          Conversation {conversation.id}
+        </Button>
+      ))
+      messageButtons = (
+        // If the user is the lister, show conversations
+        <div>
+          <h3 className="font-semibold text-amber-900 mb-3">Conversations</h3>
+            <div className="space-y-2">
+              {conversationsUI}
+            </div>
+        </div>
+      )
+    } else {
+      messageButtons = (
+        <div>
+          <h3 className="font-semibold text-amber-900 mb-3">Conversations</h3>
+          <div>No conversations yet.</div>
+        </div>
+      )
+    }
+  }
+
+  let chatComponent = null
+  if (user && user.id === listing.listerId && selectedConversation) {
+    chatComponent = (
+      <ChatComponent
+        isOpen={isChatOpen}
+        onClose={() => { setIsChatOpen(false) }}
+        recipientId={selectedConversation?.userOneId === user.id ? selectedConversation.userTwoId : selectedConversation.userOneId}
+      />
+    )
+  } else {
+    chatComponent = (
+      <ChatComponent
+        isOpen={isChatOpen}
+        onClose={() => { setIsChatOpen(false) }}
+        recipientId={listing.listerId}
+      />
+    )
   }
 
   return (
@@ -339,10 +410,7 @@ const ListingDetails = (): JSX.Element => {
                   </div>
 
                   <div className="space-y-3">
-                    <Button onClick={() => { setIsChatOpen(true) }} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Message
-                    </Button>
+                    {messageButtons}
                   </div>
                 </CardContent>
               </Card>
@@ -384,14 +452,7 @@ const ListingDetails = (): JSX.Element => {
           </div>
         </DialogContent>
       </Dialog>
-      {user && listing?.listerId && (
-        <ChatComponent
-          isOpen={isChatOpen}
-          onClose={() => { setIsChatOpen(false) }}
-          conversationId={conversationId(user.id, listing?.listerId)}
-          recipientId={listing?.listerId}
-        />
-      )}
+      {chatComponent}
     </div>
   )
 }
