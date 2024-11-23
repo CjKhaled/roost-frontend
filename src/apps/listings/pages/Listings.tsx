@@ -12,7 +12,7 @@ import ListingCard from '../components/ListingCard'
 import ProfileMenu from '../components/ProfileMenu'
 import { type Listing, type AmenityType } from '../types/listing'
 import { listingsService } from '../services/listing'
-import MapContent from '../components/MapContent'
+import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
 
 interface FilterState {
   price: number
@@ -49,14 +49,29 @@ const Listings = (): JSX.Element => {
     void fetchListings()
   }, [])
 
-  const handleListingClick = (listing: Listing) => {
-    setSelectedListing(listing.id)
-  }
+  // when a user clicks anything besides a listing card, deselect
+  useEffect(() => {
+    const handleDeselectListing = (event: MouseEvent) => {
+      const isOutsideListing = !(event.target as Element).closest('[data-listing-card]')
+      if (isOutsideListing) {
+        setSelectedListing(null)
+      }
+    }
 
-  const handlePinClick = (listing: Listing) => {
-    setSelectedListing(listing.id)
-    const targetCard = listingsRef.current?.querySelector(`[data-listing-id="${listing.id}"]`)
-    targetCard?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    document.addEventListener('click', handleDeselectListing)
+
+    return () => {
+      document.removeEventListener('click', handleDeselectListing)
+    }
+  }, [])
+
+  // a user can also deselct a listing by clicking it again
+  const handleListingClick = (listing: Listing) => {
+    if (selectedListing === listing.id) {
+      setSelectedListing(null)
+    } else {
+      setSelectedListing(listing.id)
+    }
   }
 
   const handleFiltersChange = (newFilters: FilterState) => {
@@ -133,9 +148,11 @@ const Listings = (): JSX.Element => {
         {/* Map Panel */}
         <div className='w-3/4 bg-amber-50'>
           <div className='h-full flex items-center justify-center text-amber-700'>
-            <APIProvider apiKey={MAPS_API_KEY}>
-              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true}>
-                <MapContent listings={filteredListings} selectedListing={selectedListing} onPinClick={handlePinClick} />
+            <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
+              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true} gestureHandling={'greedy'}>
+              {filteredListings.map((listing) => (
+                  <CustomAdvancedMarker listing={listing} />
+              ))}
               </Map>
             </APIProvider>
           </div>

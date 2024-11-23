@@ -56,6 +56,7 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
 
       <Card
         data-listing-id={listing.id}
+        data-listing-card="true"
         className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-amber-500 shadow-lg transform scale-[1.02]' : 'hover:shadow-lg'}
         ${hoveredListing === listing.id ? 'ring-2 ring-amber-500' : ''
         }`}
@@ -72,15 +73,16 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
           <div className='absolute top-4 right-4 flex gap-2'>
             <Badge className={`
               ${isSelected
-                ? 'bg-amber-600 text-white'
-                : 'bg-white/90 text-amber-900'
+                ? 'bg-amber-600 hover:bg-amber-600 text-white'
+                : 'bg-white/90 hover:bg-white/90 text-amber-900'
               } 
-              font-medium transition-colors
+              font-medium
             `}>
               ${listing.price}/mo
             </Badge>
             <button
               onClick={(e) => {
+                e.stopPropagation()
                 e.preventDefault()
                 toggleFavorite(listing.id)
               }}
