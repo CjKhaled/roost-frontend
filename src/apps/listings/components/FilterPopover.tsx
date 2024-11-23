@@ -42,23 +42,22 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
   }
 
   const [minPrice, maxPrice] = calculatePriceRange(listings)
-
-  const [filters, setFilters] = useState<FilterState>({
+  const [isOpen, setIsOpen] = useState(false)
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     price: maxPrice,
     bedCount: '',
     bathCount: '',
     amenities: [],
     dateRange: undefined
   })
+  const [pendingFilters, setPendingFilters] = useState<FilterState>(appliedFilters)
 
   const ALL_AMENITIES: AmenityType[] = [
     'WIFI', 'PARKING', 'LAUNDRY', 'DISHWASHER', 'GYM', 'POOL', 'STUDY_ROOM', 'TRASH_PICKUP', 'CABLE_TV', 'EV_CHARGING'
   ]
 
-  const handleFilterChange = (key: keyof FilterState, value: FilterState[keyof FilterState]): void => {
-    const newFilters = { ...filters, [key]: value }
-    setFilters(newFilters)
-    onFiltersChange(newFilters)
+  const handlePendingFilterChange = (key: keyof FilterState, value: FilterState[keyof FilterState]): void => {
+    setPendingFilters(prev => ({ ...prev, [key]: value }))
   }
 
   const clearFilters = (): void => {
@@ -69,8 +68,13 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
       amenities: [],
       dateRange: undefined
     }
-    setFilters(resetFilters)
-    onFiltersChange(resetFilters)
+    setPendingFilters(resetFilters)
+  }
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(pendingFilters)
+    onFiltersChange(pendingFilters)
+    setIsOpen(false)
   }
 
   const formatDate = (date: Date | undefined): string => {
@@ -86,7 +90,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
   }
 
   return (
-      <Popover>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant='outline'
@@ -115,18 +119,18 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
               <Label className='text-amber-900'>Maximum Price</Label>
               <div className='pt-2'>
                 <Slider
-                  value={[filters.price]}
+                  value={[pendingFilters.price]}
                   min={minPrice}
                   max={maxPrice}
                   step={100}
                   onValueChange={(value) => {
-                    handleFilterChange('price', value[0])
+                    handlePendingFilterChange('price', value[0])
                   }}
                   className='[&_[role=slider]]:bg-amber-600'
                 />
               </div>
               <div className='flex items-center justify-between text-sm text-amber-700'>
-                <span>Up to ${filters.price}</span>
+                <span>Up to ${pendingFilters.price}</span>
               </div>
             </div>
 
@@ -140,11 +144,11 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     variant='outline'
                     size='sm'
                     className={`flex-1 ${
-                        filters.bedCount === num
+                        pendingFilters.bedCount === num
                           ? 'bg-amber-600 text-white hover:bg-amber-700'
                           : 'hover:bg-amber-50 border-amber-200'
                       }`}
-                    onClick={() => { handleFilterChange('bedCount', filters.bedCount === num ? '' : num) }}
+                    onClick={() => { handlePendingFilterChange('bedCount', pendingFilters.bedCount === num ? '' : num) }}
                   >
                     {num}
                   </Button>
@@ -162,11 +166,11 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     variant='outline'
                     size='sm'
                     className={`flex-1 ${
-                        filters.bathCount === num
+                        pendingFilters.bathCount === num
                           ? 'bg-amber-600 text-white hover:bg-amber-700'
                           : 'hover:bg-amber-50 border-amber-200'
                       }`}
-                    onClick={() => { handleFilterChange('bathCount', filters.bathCount === num ? '' : num) }}
+                    onClick={() => { handlePendingFilterChange('bathCount', pendingFilters.bathCount === num ? '' : num) }}
                   >
                     {num}
                   </Button>
@@ -182,13 +186,13 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                 <div key={amenity} className='flex items-center space-x-2'>
                   <Checkbox
                     id={amenity}
-                    checked={filters.amenities.includes(amenity)}
+                    checked={pendingFilters.amenities.includes(amenity)}
                     onCheckedChange={(checked: boolean | 'indeterminate') => {
                       if (typeof checked === 'boolean') {
-                        handleFilterChange('amenities',
+                        handlePendingFilterChange('amenities',
                           checked
-                            ? [...filters.amenities, amenity] as AmenityType[]
-                            : filters.amenities.filter(a => a !== amenity)
+                            ? [...pendingFilters.amenities, amenity] as AmenityType[]
+                            : pendingFilters.amenities.filter(a => a !== amenity)
                         )
                       }
                     }}
@@ -214,22 +218,22 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                       variant='outline'
                       className={cn(
                         'w-full justify-start text-left font-normal border-amber-200 hover:bg-amber-50',
-                        !filters.dateRange && 'text-muted-foreground'
+                        !pendingFilters.dateRange && 'text-muted-foreground'
                       )}
                     >
                       <CalendarIcon className='mr-2 h-4 w-4' />
-                        {filters.dateRange?.from
+                        {pendingFilters.dateRange?.from
                           ? (
-                              filters.dateRange.to
+                              pendingFilters.dateRange.to
                                 ? (
                             <>
-                              {formatDate(filters.dateRange.from as Date | undefined)} -
+                              {formatDate(pendingFilters.dateRange.from as Date | undefined)} -
                               {' '}
-                              {formatDate(filters.dateRange.to as Date | undefined)}
+                              {formatDate(pendingFilters.dateRange.to as Date | undefined)}
                             </>
                                   )
                                 : (
-                                    formatDate(filters.dateRange.from as Date | undefined)
+                                    formatDate(pendingFilters.dateRange.from as Date | undefined)
                                   )
                             )
                           : (
@@ -241,10 +245,10 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     <CalendarComponent
                       initialFocus
                       mode='range'
-                      defaultMonth={filters.dateRange?.from}
-                      selected={filters.dateRange}
+                      defaultMonth={pendingFilters.dateRange?.from}
+                      selected={pendingFilters.dateRange}
                       onSelect={(dateRange) => {
-                        handleFilterChange('dateRange', dateRange)
+                        handlePendingFilterChange('dateRange', dateRange)
                       }}
                       numberOfMonths={2}
                       className='rounded-md border border-amber-200'
@@ -256,7 +260,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
             {/* Apply Filters Button */}
             <Button
               className='w-full bg-amber-600 hover:bg-amber-700 text-white'
-              onClick={() => { onFiltersChange(filters) }}
+              onClick={handleApplyFilters}
             >
               Apply Filters
             </Button>
