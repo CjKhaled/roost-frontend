@@ -5,10 +5,14 @@ import { Home } from 'lucide-react'
 
 interface CustomAdvancedMarkerProps {
   listing: Listing
+  isSelected?: boolean
 }
 
-const CustomAdvancedMarker = ({ listing }: CustomAdvancedMarkerProps): JSX.Element => {
+const CustomAdvancedMarker = ({ listing, isSelected = false }: CustomAdvancedMarkerProps): JSX.Element => {
   const [hovered, setHovered] = useState<boolean>(false)
+
+  // marker should appear expanded if either hovered OR selected
+  const isExpanded = hovered || isSelected
 
   const renderCustomPin = () => {
     return (
@@ -18,7 +22,7 @@ const CustomAdvancedMarker = ({ listing }: CustomAdvancedMarkerProps): JSX.Eleme
                 className={`
                     relative
                     transition-all duration-200 ease-in-out
-                    ${hovered ? 'w-20 h-20' : 'w-9 h-9'}
+                    ${isExpanded ? 'w-20 h-20' : 'w-9 h-9'}
                     bg-amber-600
                     ring-4 ring-amber-800
                     rounded-full p-1
@@ -30,7 +34,7 @@ const CustomAdvancedMarker = ({ listing }: CustomAdvancedMarkerProps): JSX.Eleme
                 {/* Icon Container */}
                 <div className={`
                     transition-opacity duration-200
-                    ${hovered ? 'opacity-0' : 'opacity-100'}
+                    ${isExpanded ? 'opacity-0' : 'opacity-100'}
                 `}>
                     <Home className="h-5 w-5 text-white" />
                 </div>
@@ -38,7 +42,7 @@ const CustomAdvancedMarker = ({ listing }: CustomAdvancedMarkerProps): JSX.Eleme
                 <div className={`
                     absolute inset-0
                     transition-opacity duration-200
-                    ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+                    ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                     <img
                     src={listing.imageUrl[0]}
                     alt={listing.name}
@@ -54,7 +58,7 @@ const CustomAdvancedMarker = ({ listing }: CustomAdvancedMarkerProps): JSX.Eleme
             border-[12px] border-amber-800
             transition-transform duration-200
             -translate-x-1/2 translate-y-[2%] rotate-45
-            ${hovered ? 'scale-[1.4]' : 'scale-100'}
+            ${isExpanded ? 'scale-[1.4]' : 'scale-100'}
             z-0
             `} />
       </div>

@@ -12,7 +12,7 @@ import ListingCard from '../components/ListingCard'
 import ProfileMenu from '../components/ProfileMenu'
 import { type Listing, type AmenityType } from '../types/listing'
 import { listingsService } from '../services/listing'
-import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
+import MapContent from '../components/MapContent'
 
 interface FilterState {
   price: number
@@ -150,9 +150,7 @@ const Listings = (): JSX.Element => {
           <div className='h-full flex items-center justify-center text-amber-700'>
             <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
               <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true} gestureHandling={'greedy'}>
-              {filteredListings.map((listing) => (
-                  <CustomAdvancedMarker listing={listing} />
-              ))}
+                <MapContent filteredListings={filteredListings} selectedListing={selectedListing} />
               </Map>
             </APIProvider>
           </div>
