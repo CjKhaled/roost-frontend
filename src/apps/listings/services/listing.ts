@@ -123,7 +123,7 @@ export class ListingsService {
       })
 
       if (!response.ok) {
-        const error = await response.text()
+        const error = await response.json()
         console.log(error)
         throw new Error('Failed to create listing')
       }

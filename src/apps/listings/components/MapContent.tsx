@@ -98,7 +98,7 @@ const MapContent = ({
   return (
     <>
       {filteredListings.map((listing) => (
-        <CustomAdvancedMarker key={listing.id} listing={listing} isSelected={selectedListing === listing.id} />
+        <CustomAdvancedMarker listing={listing} isSelected={selectedListing === listing.id} />
       ))}
     </>
   )

@@ -28,10 +28,11 @@ import {
   DialogClose
 } from '../../../components/ui/dialog'
 import ProfileMenu from '../components/ProfileMenu'
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import { type Listing } from '../types/listing'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
+import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
 
 const ListingDetails = (): JSX.Element => {
   const { id } = useParams<{ id: string }>()
@@ -230,11 +231,9 @@ const ListingDetails = (): JSX.Element => {
                     <h3 className="font-semibold text-amber-900 mb-4">Location</h3>
                     <div className="aspect-[16/9] rounded-lg overflow-hidden">
                       <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-700 border border-amber-200">
-                        <APIProvider apiKey={MAPS_API_KEY}>
-                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location}>
-                            <AdvancedMarker key={listing.id} position={listing.location}>
-                              <Pin background='#b45309' />
-                            </AdvancedMarker>
+                        <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
+                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location} disableDefaultUI={true} gestureHandling={'greedy'}>
+                            <CustomAdvancedMarker listing={listing} />
                           </Map>
                         </APIProvider>
                       </div>
