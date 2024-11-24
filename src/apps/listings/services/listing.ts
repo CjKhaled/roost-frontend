@@ -74,6 +74,24 @@ export class ListingsService {
     }
   }
 
+  async getUserWhoCreatedListing (id: string): Promise<User> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/${id}`, {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user')
+      }
+
+      const data = await response.json() as UserResponse
+      return data.user
+    } catch (error) {
+      console.error('Error fetching listings:', error)
+      throw error
+    }
+  }
+
   async getListingById (id: string): Promise<Listing> {
     try {
       const response = await fetch(`${this.API_URL}/listings/${id}`, {

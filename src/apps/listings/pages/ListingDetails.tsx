@@ -30,6 +30,7 @@ import {
 import ProfileMenu from '../components/ProfileMenu'
 import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import { type Listing } from '../types/listing'
+import { type User as Lister } from '../types/user'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
 import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
@@ -43,6 +44,7 @@ const ListingDetails = (): JSX.Element => {
   const [isFavorited, setIsFavorited] = useState<boolean>(false)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [lister, setLister] = useState<Lister | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
 
   useEffect(() => {
@@ -55,6 +57,9 @@ const ListingDetails = (): JSX.Element => {
       try {
         const data = await listingsService.getListingById(id)
         setListing(data)
+
+        const listerData = await listingsService.getUserWhoCreatedListing(data.listerId)
+        setLister(listerData)
       } catch (err) {
         setError('Failed to fetch listing details')
         console.error(err)
@@ -118,6 +123,7 @@ const ListingDetails = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
+              data-testid="back-to-listings-button"
               variant="ghost"
               className="text-amber-700 hover:text-amber-800 hover:bg-amber-100"
               onClick={() => { window.history.back() }}
@@ -127,6 +133,7 @@ const ListingDetails = (): JSX.Element => {
             </Button>
             <div className="flex gap-2">
               <Button
+                data-testid="save-button"
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
                 onClick={() => { setIsFavorited(!isFavorited) }}
@@ -318,7 +325,7 @@ const ListingDetails = (): JSX.Element => {
                     <div className="space-y-2 text-amber-700">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>User</span>
+                        <span>{lister?.firstName} {lister?.lastName}</span>
                       </div>
                     </div>
                   </div>
