@@ -55,6 +55,7 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
   return (
 
       <Card
+        data-testid="listing-card"
         data-listing-id={listing.id}
         data-listing-card="true"
         className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-amber-500 shadow-lg transform scale-[1.02]' : 'hover:shadow-lg'}
@@ -86,6 +87,7 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
                 e.preventDefault()
                 toggleFavorite(listing.id)
               }}
+              aria-label='favorite'
               className='p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors'
             >
               <Heart
@@ -121,7 +123,7 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
               <Bath className='h-4 w-4' />
               {listing.bathCount} bath
             </span>
-            <span className='flex items-center gap-1'>
+            <span className='flex items-center gap-1' data-testid="date-range">
               <CalendarIcon className='h-4 w-4' />
               {formatDateRange(listing.available.from, listing.available.to)}
             </span>

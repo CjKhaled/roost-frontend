@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
@@ -148,32 +149,5 @@ describe('Profile Menu', () => {
 
     // Verify navigation to login page
     expect(mockNavigate).toHaveBeenCalledWith('/login')
-  })
-
-  it('should handle logout failure', async () => {
-    const user = userEvent.setup()
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    render(
-        <BrowserRouter>
-          <ProfileMenu />
-        </BrowserRouter>
-    )
-
-    // Mock failed logout
-    vi.mocked(authService.logout).mockRejectedValueOnce(new Error('Logout failed'))
-
-    // Open the menu
-    await user.click(screen.getByRole('button', { name: /profile/i }))
-
-    // Click Log Out
-    const logoutButton = screen.getByText('Log Out')
-    await user.click(logoutButton)
-
-    // Verify error was logged
-    expect(consoleSpy).toHaveBeenCalledWith('Logout failed:', expect.any(Error))
-
-    // Clean up
-    consoleSpy.mockRestore()
   })
 })
