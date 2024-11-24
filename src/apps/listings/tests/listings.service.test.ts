@@ -124,6 +124,42 @@ describe('ListingsService', () => {
     })
   })
 
+  describe('getUserWhoCreatedListing', () => {
+    const mockUser = {
+      id: 'user123',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+      createdListings: [{ id: '1' }, { id: '2' }]
+    }
+
+    it('should fetch user successfully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ user: mockUser })
+      })
+
+      const user = await listingsService.getUserWhoCreatedListing('user123')
+      expect(user).toEqual(mockUser)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3000/api/users/user123',
+        expect.objectContaining({
+          credentials: 'include'
+        })
+      )
+    })
+
+    it('should handle fetch failure', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false })
+      await expect(listingsService.getUserWhoCreatedListing('user123')).rejects.toThrow('Failed to fetch user')
+    })
+
+    it('should handle network error', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'))
+      await expect(listingsService.getUserWhoCreatedListing('user123')).rejects.toThrow('Network error')
+    })
+  })
+
   describe('createListing', () => {
     const newListing: Partial<Listing> = {
       name: 'New Listing',
