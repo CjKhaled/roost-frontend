@@ -42,7 +42,14 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
   const formatDateRange = (from: string, to: string): string => {
     const fromDate = new Date(from)
     const toDate = new Date(to)
-    return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
+    // Format considering timezone
+    return `${fromDate.toLocaleDateString('en-US', {
+        month: 'short',
+        timeZone: 'UTC'
+      })} ${fromDate.getUTCFullYear()} - ${toDate.toLocaleDateString('en-US', {
+        month: 'short',
+        timeZone: 'UTC'
+      })} ${toDate.getUTCFullYear()}`
   }
 
   const formatAmenityLabel = (amenity: string): string => {

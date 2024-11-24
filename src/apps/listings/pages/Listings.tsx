@@ -82,9 +82,19 @@ const Listings = (): JSX.Element => {
       const amenitiesMatch = newFilters.amenities.length === 0 ||
         newFilters.amenities.every(amenity => listing.amenities.includes(amenity))
 
-      const dateMatch = !newFilters.dateRange || true // Implement date logic here
+      let dateMatch = true
+      if (newFilters.dateRange?.from && newFilters.dateRange?.to) {
+        const listingFrom = new Date(listing.available.from)
+        const listingTo = new Date(listing.available.to)
 
-      return priceMatch && bedroomsMatch && bathroomsMatch && amenitiesMatch && dateMatch
+        const selectedFrom = new Date(newFilters.dateRange.from)
+        const selectedTo = new Date(newFilters.dateRange.to)
+
+        dateMatch = listingFrom <= selectedTo && listingTo >= selectedFrom
+      }
+
+      const shouldInclude = priceMatch && bedroomsMatch && bathroomsMatch && amenitiesMatch && dateMatch
+      return shouldInclude
     })
 
     setFilteredListings(filtered)

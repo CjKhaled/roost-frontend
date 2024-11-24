@@ -120,6 +120,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
               <div className='pt-2'>
                 <Slider
                   value={[pendingFilters.price]}
+                  data-testid="price-slider"
                   min={minPrice}
                   max={maxPrice}
                   step={100}
