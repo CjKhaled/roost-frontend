@@ -19,6 +19,7 @@ const CustomAdvancedMarker = ({ listing, isSelected = false }: CustomAdvancedMar
         <div className="relative transform transition-all duration-200 ease-in-out translate-y-0 hover:-translate-y-1 cursor-pointer">
         {/* Custom Pin */}
             <div
+                data-testid="marker-pin"
                 className={`
                     relative
                     transition-all duration-200 ease-in-out
@@ -32,14 +33,18 @@ const CustomAdvancedMarker = ({ listing, isSelected = false }: CustomAdvancedMar
                 }>
 
                 {/* Icon Container */}
-                <div className={`
+                <div
+                    data-testid="icon-container"
+                    className={`
                     transition-opacity duration-200
                     ${isExpanded ? 'opacity-0' : 'opacity-100'}
                 `}>
                     <Home className="h-5 w-5 text-white" />
                 </div>
 
-                <div className={`
+                <div
+                    data-testid="image-container"
+                    className={`
                     absolute inset-0
                     transition-opacity duration-200
                     ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
@@ -52,14 +57,16 @@ const CustomAdvancedMarker = ({ listing, isSelected = false }: CustomAdvancedMar
             </div>
 
             {/* Pin Tip */}
-            <div className={`
-            absolute -bottom-1 left-1/2
-            w-0 h-0
-            border-[12px] border-amber-800
-            transition-transform duration-200
-            -translate-x-1/2 translate-y-[2%] rotate-45
-            ${isExpanded ? 'scale-[1.4]' : 'scale-100'}
-            z-0
+            <div
+                data-testid="pin-tip"
+                className={`
+                    absolute -bottom-1 left-1/2
+                    w-0 h-0
+                    border-[12px] border-amber-800
+                    transition-transform duration-200
+                    -translate-x-1/2 translate-y-[2%] rotate-45
+                    ${isExpanded ? 'scale-[1.4]' : 'scale-100'}
+                    z-0
             `} />
       </div>
     )
