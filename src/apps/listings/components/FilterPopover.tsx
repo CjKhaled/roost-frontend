@@ -143,6 +143,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     key={num}
                     variant='outline'
                     size='sm'
+                    aria-label={`${num} bedrooms`}
                     className={`flex-1 ${
                         pendingFilters.bedCount === num
                           ? 'bg-amber-600 text-white hover:bg-amber-700'
@@ -165,6 +166,7 @@ const FilterPopover = ({ onFiltersChange, listings }: FilterPopoverProps): JSX.E
                     key={num}
                     variant='outline'
                     size='sm'
+                    aria-label={`${num} bathrooms`}
                     className={`flex-1 ${
                         pendingFilters.bathCount === num
                           ? 'bg-amber-600 text-white hover:bg-amber-700'
