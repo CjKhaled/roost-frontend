@@ -28,10 +28,12 @@ import {
   DialogClose
 } from '../../../components/ui/dialog'
 import ProfileMenu from '../components/ProfileMenu'
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import { type Listing } from '../types/listing'
+import { type User as Lister } from '../types/user'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
+import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
 
 const ListingDetails = (): JSX.Element => {
   const { id } = useParams<{ id: string }>()
@@ -42,8 +44,9 @@ const ListingDetails = (): JSX.Element => {
   const [isFavorited, setIsFavorited] = useState<boolean>(false)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [lister, setLister] = useState<Lister | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
-  const [lister, setLister] = useState<{ firstName: string; lastName: string } | null>(null)
+  // const [lister, setLister] = useState<{ firstName: string; lastName: string } | null>(null)
   const [isListerLoading, setIsListerLoading] = useState<boolean>(true)
 
   useEffect(() => {
@@ -56,6 +59,9 @@ const ListingDetails = (): JSX.Element => {
       try {
         const data = await listingsService.getListingById(id)
         setListing(data)
+
+        const listerData = await listingsService.getUserWhoCreatedListing(data.listerId)
+        setLister(listerData)
       } catch (err) {
         setError('Failed to fetch listing details')
         console.error(err)
@@ -143,6 +149,7 @@ const ListingDetails = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
+              data-testid="back-to-listings-button"
               variant="ghost"
               className="text-amber-700 hover:text-amber-800 hover:bg-amber-100"
               onClick={() => { window.history.back() }}
@@ -152,6 +159,7 @@ const ListingDetails = (): JSX.Element => {
             </Button>
             <div className="flex gap-2">
               <Button
+                data-testid="save-button"
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
                 onClick={() => {
@@ -263,11 +271,9 @@ const ListingDetails = (): JSX.Element => {
                     <h3 className="font-semibold text-amber-900 mb-4">Location</h3>
                     <div className="aspect-[16/9] rounded-lg overflow-hidden">
                       <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-700 border border-amber-200">
-                        <APIProvider apiKey={MAPS_API_KEY}>
-                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location}>
-                            <AdvancedMarker key={listing.id} position={listing.location}>
-                              <Pin background='#b45309' />
-                            </AdvancedMarker>
+                        <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
+                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location} disableDefaultUI={true} gestureHandling={'greedy'}>
+                            <CustomAdvancedMarker listing={listing} />
                           </Map>
                         </APIProvider>
                       </div>
@@ -358,7 +364,7 @@ const ListingDetails = (): JSX.Element => {
                         ? (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>{`${lister.firstName} ${lister.lastName}`}</span>
+                        <span>{lister?.firstName} {lister?.lastName}</span>
                       </div>
                           )
                         : (

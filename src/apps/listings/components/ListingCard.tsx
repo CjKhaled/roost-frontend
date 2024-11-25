@@ -42,7 +42,14 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
   const formatDateRange = (from: string, to: string): string => {
     const fromDate = new Date(from)
     const toDate = new Date(to)
-    return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
+    // Format considering timezone
+    return `${fromDate.toLocaleDateString('en-US', {
+        month: 'short',
+        timeZone: 'UTC'
+      })} ${fromDate.getUTCFullYear()} - ${toDate.toLocaleDateString('en-US', {
+        month: 'short',
+        timeZone: 'UTC'
+      })} ${toDate.getUTCFullYear()}`
   }
 
   const formatAmenityLabel = (amenity: string): string => {
@@ -55,7 +62,9 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
   return (
 
       <Card
+        data-testid="listing-card"
         data-listing-id={listing.id}
+        data-listing-card="true"
         className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-amber-500 shadow-lg transform scale-[1.02]' : 'hover:shadow-lg'}
         ${hoveredListing === listing.id ? 'ring-2 ring-amber-500' : ''
         }`}
@@ -72,18 +81,20 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
           <div className='absolute top-4 right-4 flex gap-2'>
             <Badge className={`
               ${isSelected
-                ? 'bg-amber-600 text-white'
-                : 'bg-white/90 text-amber-900'
+                ? 'bg-amber-600 hover:bg-amber-600 text-white'
+                : 'bg-white/90 hover:bg-white/90 text-amber-900'
               } 
-              font-medium transition-colors
+              font-medium
             `}>
               ${listing.price}/mo
             </Badge>
             <button
               onClick={(e) => {
+                e.stopPropagation()
                 e.preventDefault()
                 toggleFavorite(listing.id)
               }}
+              aria-label='favorite'
               className='p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors'
             >
               <Heart
@@ -119,7 +130,7 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
               <Bath className='h-4 w-4' />
               {listing.bathCount} bath
             </span>
-            <span className='flex items-center gap-1'>
+            <span className='flex items-center gap-1' data-testid="date-range">
               <CalendarIcon className='h-4 w-4' />
               {formatDateRange(listing.available.from, listing.available.to)}
             </span>

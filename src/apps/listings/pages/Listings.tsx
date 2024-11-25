@@ -49,14 +49,29 @@ const Listings = (): JSX.Element => {
     void fetchListings()
   }, [])
 
-  const handleListingClick = (listing: Listing) => {
-    setSelectedListing(listing.id)
-  }
+  // when a user clicks anything besides a listing card, deselect
+  useEffect(() => {
+    const handleDeselectListing = (event: MouseEvent) => {
+      const isOutsideListing = !(event.target as Element).closest('[data-listing-card]')
+      if (isOutsideListing) {
+        setSelectedListing(null)
+      }
+    }
 
-  const handlePinClick = (listing: Listing) => {
-    setSelectedListing(listing.id)
-    const targetCard = listingsRef.current?.querySelector(`[data-listing-id="${listing.id}"]`)
-    targetCard?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    document.addEventListener('click', handleDeselectListing)
+
+    return () => {
+      document.removeEventListener('click', handleDeselectListing)
+    }
+  }, [])
+
+  // a user can also deselct a listing by clicking it again
+  const handleListingClick = (listing: Listing) => {
+    if (selectedListing === listing.id) {
+      setSelectedListing(null)
+    } else {
+      setSelectedListing(listing.id)
+    }
   }
 
   const handleFiltersChange = (newFilters: FilterState) => {
@@ -67,9 +82,19 @@ const Listings = (): JSX.Element => {
       const amenitiesMatch = newFilters.amenities.length === 0 ||
         newFilters.amenities.every(amenity => listing.amenities.includes(amenity))
 
-      const dateMatch = !newFilters.dateRange || true // Implement date logic here
+      let dateMatch = true
+      if (newFilters.dateRange?.from && newFilters.dateRange?.to) {
+        const listingFrom = new Date(listing.available.from)
+        const listingTo = new Date(listing.available.to)
 
-      return priceMatch && bedroomsMatch && bathroomsMatch && amenitiesMatch && dateMatch
+        const selectedFrom = new Date(newFilters.dateRange.from)
+        const selectedTo = new Date(newFilters.dateRange.to)
+
+        dateMatch = listingFrom <= selectedTo && listingTo >= selectedFrom
+      }
+
+      const shouldInclude = priceMatch && bedroomsMatch && bathroomsMatch && amenitiesMatch && dateMatch
+      return shouldInclude
     })
 
     setFilteredListings(filtered)
@@ -103,12 +128,12 @@ const Listings = (): JSX.Element => {
               <span className='text-3xl font-bold text-amber-900'>Roost</span>
             </div>
 
-            {/* Search and Controls Section */}
+            {/* Search and Controls Section - Todo, make it so users can search for a city */}
             <div className='flex-1 flex gap-4 items-center'>
               <div className='relative flex-1'>
                 <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
                 <Input
-                  placeholder='Search by location, price, or amenities...'
+                  placeholder='Search by location'
                   className='pl-10 border-amber-200 focus:border-amber-500'
                 />
               </div>
@@ -133,9 +158,9 @@ const Listings = (): JSX.Element => {
         {/* Map Panel */}
         <div className='w-3/4 bg-amber-50'>
           <div className='h-full flex items-center justify-center text-amber-700'>
-            <APIProvider apiKey={MAPS_API_KEY}>
-              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true}>
-                <MapContent listings={filteredListings} selectedListing={selectedListing} onPinClick={handlePinClick} />
+            <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
+              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true} gestureHandling={'greedy'}>
+                <MapContent filteredListings={filteredListings} selectedListing={selectedListing} />
               </Map>
             </APIProvider>
           </div>
