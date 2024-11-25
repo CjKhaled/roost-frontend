@@ -67,29 +67,30 @@ const ListingDetails = (): JSX.Element => {
         console.error(err)
       } finally {
         setIsLoading(false)
+        setIsListerLoading(false)
       }
     }
 
     void fetchListing()
   }, [id, navigate])
 
-  useEffect(() => {
-    // Only fetch lister data if listing is defined
-    if (!listing) return
+  // useEffect(() => {
+  //   // Only fetch lister data if listing is defined
+  //   if (!listing) return
 
-    const fetchLister = async () => {
-      try {
-        const listerData = await listingsService.getUserByID(listing.listerId) // Use the service to fetch lister data
-        setLister(listerData)
-      } catch (error) {
-        console.error('Failed to fetch lister', error)
-      } finally {
-        setIsListerLoading(false)
-      }
-    }
+  //   const fetchLister = async () => {
+  //     try {
+  //       const listerData = await listingsService.getUserByID(listing.listerId)
+  //       setLister(listerData)
+  //     } catch (error) {
+  //       console.error('Failed to fetch lister', error)
+  //     } finally {
+  //       setIsListerLoading(false)
+  //     }
+  //   }
 
-    void fetchLister()
-  }, [listing])
+  //   void fetchLister()
+  // }, [listing])
 
   useEffect(() => {
     if (!listing) return

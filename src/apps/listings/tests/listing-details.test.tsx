@@ -239,6 +239,7 @@ describe('Listing Details', () => {
 
   it('should render the correct information from the listing and the lister', async () => {
     renderComponent()
+    
 
     await waitFor(() => {
       expect(screen.queryByText('Loading listing details...')).not.toBeInTheDocument()
@@ -256,6 +257,12 @@ describe('Listing Details', () => {
     // Check utilities
     expect(screen.getByText('Water')).toBeInTheDocument()
     expect(screen.getByText('Electricity')).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    })
+
+    screen.debug(undefined, Infinity)
 
     // Check lister info
     expect(screen.getByText('John Doe')).toBeInTheDocument()
@@ -352,4 +359,42 @@ describe('Listing Details', () => {
     await user.click(saveButton)
     expect(screen.getByTestId('save-button')).toHaveTextContent('Save')
   })
+
+  //issue 10
+  it('should navigate to messages screen with prepopulated data when the Message button is clicked', async () => {
+    const user = userEvent.setup()
+    renderComponent()
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading listing details...')).not.toBeInTheDocument()
+    })
+
+    const messageButton = screen.getByRole('button', { name: /message/i })
+    await user.click(messageButton)
+
+    expect(mockNavigate).toHaveBeenCalledWith('/messages')
+  });
+
+  it('should add listing to local storage when saved and remove when unsaved', async () => {
+    const user = userEvent.setup()
+    renderComponent()
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading listing details...')).not.toBeInTheDocument()
+    })
+
+    const saveButton = screen.getByTestId('save-button')
+
+    // Click save button to save the listing
+    await user.click(saveButton)
+    expect(localStorage.getItem('favoritedListings')).toContain(mockListing.id)
+    expect(saveButton).toHaveTextContent('Saved')
+
+    // Click save button again to unsave the listing
+    await user.click(saveButton)
+    expect(localStorage.getItem('favoritedListings')).not.toContain(mockListing.id)
+    expect(saveButton).toHaveTextContent('Save')
+  })
+
+
 })
