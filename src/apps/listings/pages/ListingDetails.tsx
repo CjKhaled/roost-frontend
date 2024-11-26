@@ -34,6 +34,7 @@ import { type User as Lister } from '../types/user'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
 import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
+import { useAuth } from '../../../context/AuthContext'
 
 const ListingDetails = (): JSX.Element => {
   const { id } = useParams<{ id: string }>()
@@ -46,8 +47,9 @@ const ListingDetails = (): JSX.Element => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [lister, setLister] = useState<Lister | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
-  // const [lister, setLister] = useState<{ firstName: string; lastName: string } | null>(null)
   const [isListerLoading, setIsListerLoading] = useState<boolean>(true)
+  const { user: currentUser } = useAuth()
+  const isOwner = currentUser?.id === listing?.listerId
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -73,24 +75,6 @@ const ListingDetails = (): JSX.Element => {
 
     void fetchListing()
   }, [id, navigate])
-
-  // useEffect(() => {
-  //   // Only fetch lister data if listing is defined
-  //   if (!listing) return
-
-  //   const fetchLister = async () => {
-  //     try {
-  //       const listerData = await listingsService.getUserByID(listing.listerId)
-  //       setLister(listerData)
-  //     } catch (error) {
-  //       console.error('Failed to fetch lister', error)
-  //     } finally {
-  //       setIsListerLoading(false)
-  //     }
-  //   }
-
-  //   void fetchLister()
-  // }, [listing])
 
   useEffect(() => {
     if (!listing) return
@@ -164,12 +148,14 @@ const ListingDetails = (): JSX.Element => {
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
                 onClick={() => {
-                  const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
-                  const updatedFavorites = isFavorited
-                    ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
-                    : [...favorites, listing.id]
-                  localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
-                  setIsFavorited(!isFavorited)
+                  if(!isOwner){
+                    const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
+                    const updatedFavorites = isFavorited
+                      ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
+                      : [...favorites, listing.id]
+                    localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
+                    setIsFavorited(!isFavorited)
+                  }
                 }}
               >
                 <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
