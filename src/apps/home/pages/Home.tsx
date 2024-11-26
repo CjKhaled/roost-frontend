@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import { Search, Leaf } from 'lucide-react'
-import { Input } from '../../../components/ui/input'
+import { Leaf } from 'lucide-react'
 import ProfileMenu from '../../listings/components/ProfileMenu'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../components/ui/button'
+import CityAutocomplete from '../components/CityAutocomplete'
 
 const Home = (): JSX.Element => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const navigate = useNavigate()
+  const [selectedCity, setSelectedCity] = useState('')
+  //   const navigate = useNavigate()
 
   const handleSearch = (e: { preventDefault: () => void }) => {
     e.preventDefault()
-    navigate('/listings', { state: { search: searchQuery } })
+    console.log('Selected city:', selectedCity)
   }
 
   return (
@@ -39,20 +39,15 @@ const Home = (): JSX.Element => {
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="relative max-w-xl mx-auto">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-amber-400 h-5 w-5" />
-          <Input
-            type="text"
-            placeholder="Search by city..."
-            className="w-full pl-5 py-6 text-lg border-2 border-amber-200 rounded-lg focus:border-amber-500 focus:ring-amber-500 bg-white/80 backdrop-blur-sm"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value) }}
-          />
-          <Button
-            type="submit"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-600 hover:bg-amber-700 text-white"
-          >
-            Search
-          </Button>
+          <div className="relative">
+                <CityAutocomplete onSelect={setSelectedCity} />
+                <Button
+                    type="submit"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                    Search
+                </Button>
+          </div>
         </form>
       </main>
     </div>
