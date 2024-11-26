@@ -34,6 +34,7 @@ import { type User as Lister } from '../types/user'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
 import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
+import { useAuth } from '../../../context/AuthContext'
 
 const ListingDetails = (): JSX.Element => {
   const { id } = useParams<{ id: string }>()
@@ -46,6 +47,9 @@ const ListingDetails = (): JSX.Element => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [lister, setLister] = useState<Lister | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
+  const [isListerLoading, setIsListerLoading] = useState<boolean>(true)
+  const { user: currentUser } = useAuth()
+  const isOwner = currentUser?.id === listing?.listerId
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -65,11 +69,18 @@ const ListingDetails = (): JSX.Element => {
         console.error(err)
       } finally {
         setIsLoading(false)
+        setIsListerLoading(false)
       }
     }
 
     void fetchListing()
   }, [id, navigate])
+
+  useEffect(() => {
+    if (!listing) return
+    const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
+    if (favorites.includes(listing.id)) setIsFavorited(true)
+  }, [listing])
 
   if (isLoading) {
     return (
@@ -136,7 +147,16 @@ const ListingDetails = (): JSX.Element => {
                 data-testid="save-button"
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
-                onClick={() => { setIsFavorited(!isFavorited) }}
+                onClick={() => {
+                  if (!isOwner) {
+                    const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
+                    const updatedFavorites = isFavorited
+                      ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
+                      : [...favorites, listing.id]
+                    localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
+                    setIsFavorited(!isFavorited)
+                  }
+                }}
               >
                 <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
                 {isFavorited ? 'Saved' : 'Save'}
@@ -323,15 +343,30 @@ const ListingDetails = (): JSX.Element => {
                   <div className="pt-4 border-t border-amber-200">
                     <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
                     <div className="space-y-2 text-amber-700">
+                    {isListerLoading
+                      ? (
+                      <div>Loading...</div>
+                        )
+                      : lister
+                        ? (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span>{lister?.firstName} {lister?.lastName}</span>
                       </div>
+                          )
+                        : (
+                      <div>Lister not found</div>
+                          )}
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                    <Button
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                      onClick={() => {
+                        navigate('/messages')
+                      }}
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Message
                     </Button>
