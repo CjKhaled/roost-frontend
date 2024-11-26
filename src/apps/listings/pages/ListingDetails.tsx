@@ -148,7 +148,7 @@ const ListingDetails = (): JSX.Element => {
                 variant="outline"
                 className="border-amber-200 hover:bg-amber-50"
                 onClick={() => {
-                  if(!isOwner){
+                  if (!isOwner) {
                     const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
                     const updatedFavorites = isFavorited
                       ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
