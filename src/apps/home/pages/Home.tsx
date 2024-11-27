@@ -1,17 +1,34 @@
 import { useState } from 'react'
 import { Leaf } from 'lucide-react'
 import ProfileMenu from '../../listings/components/ProfileMenu'
-// import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../components/ui/button'
 import CityAutocomplete from '../components/CityAutocomplete'
 
 const Home = (): JSX.Element => {
   const [selectedCity, setSelectedCity] = useState('')
-  //   const navigate = useNavigate()
+  const [coordinates, setCoordinates] = useState<{ lat?: number; lng?: number }>({})
+  const navigate = useNavigate()
 
-  const handleSearch = (e: { preventDefault: () => void }) => {
-    e.preventDefault()
-    console.log('Selected city:', selectedCity)
+  const handleSelect = (cityState: string, lat?: number, lng?: number) => {
+    setSelectedCity(cityState)
+    setCoordinates({ lat, lng })
+    if (cityState && lat && lng) {
+      navigate('/listings', {
+        state: {
+          city: cityState,
+          coordinates: { lat, lng }
+        }
+      })
+    }
+  }
+
+  const handleSearch = (e?: { preventDefault: () => void }) => {
+    e?.preventDefault()
+    if (selectedCity && coordinates.lat && coordinates.lng) {
+      console.log('Selected city:', selectedCity)
+      console.log('Coordinates:', coordinates)
+    }
   }
 
   return (
@@ -38,11 +55,12 @@ const Home = (): JSX.Element => {
         </p>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="relative max-w-xl mx-auto">
+        <form className="relative max-w-xl mx-auto">
           <div className="relative">
-                <CityAutocomplete onSelect={setSelectedCity} />
+                <CityAutocomplete onSelect={handleSelect} onSubmit={handleSearch} />
                 <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleSearch}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-600 hover:bg-amber-700 text-white"
                 >
                     Search

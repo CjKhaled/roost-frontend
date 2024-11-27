@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { listingsService, transformAPIListing } from '../services/listing'
-import { type Listing, type AmenityType, type UtilityType } from '../types/listing'
+import { type Listing, type AmenityType, type UtilityType, type APIListing } from '../types/listing'
 
 describe('ListingsService', () => {
   const mockFetch = vi.fn()
@@ -15,7 +15,7 @@ describe('ListingsService', () => {
     global.fetch = originalFetch
   })
 
-  const mockAPIListing = {
+  const mockAPIListing: APIListing = {
     id: '1',
     name: 'Test Listing',
     address: '123 Test St',
@@ -33,6 +33,9 @@ describe('ListingsService', () => {
     guestsAllowed: true,
     petsAllowed: false,
     smokingAllowed: false,
+    city: 'Gainesville, FL',
+    cityLat: 29.6519563,
+    cityLng: -82.324998,
     bedCount: 2,
     bathCount: 1,
     createdAt: '2024-01-01T00:00:00.000Z',

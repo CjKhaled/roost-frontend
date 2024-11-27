@@ -17,13 +17,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { authService } from '../../auth/services/auth'
 
-interface ProfileMenuProps {
-  isLoggedIn?: boolean
-}
-
-const ProfileMenu = ({ isLoggedIn = false }: ProfileMenuProps): JSX.Element => {
+const ProfileMenu = (): JSX.Element => {
   const navigate = useNavigate()
-  const { setUser } = useAuth()
+  const { user, setUser } = useAuth()
 
   const handleLogout = async (): Promise<void> => {
     try {
@@ -50,7 +46,7 @@ const ProfileMenu = ({ isLoggedIn = false }: ProfileMenuProps): JSX.Element => {
         align='end'
         className='w-48 bg-white border border-amber-100'
       >
-        {isLoggedIn
+        {user !== null
           ? (
           <>
             <Link to='/manage-listings'>

@@ -38,6 +38,9 @@ export const transformAPIListing = (apiListing: APIListing): Listing => {
     imageUrl: apiListing.imageUrl,
     amenities: apiListing.amenities,
     utilities: apiListing.utilities,
+    city: apiListing.city,
+    cityLat: apiListing.cityLat,
+    cityLng: apiListing.cityLng,
     policies: {
       strictParking: apiListing.strictParking,
       strictNoisePolicy: apiListing.strictNoisePolicy,

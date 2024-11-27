@@ -13,6 +13,7 @@ import ProfileMenu from '../components/ProfileMenu'
 import { type Listing, type AmenityType } from '../types/listing'
 import { listingsService } from '../services/listing'
 import MapContent from '../components/MapContent'
+import { useLocation } from 'react-router-dom'
 
 interface FilterState {
   price: number
@@ -22,9 +23,23 @@ interface FilterState {
   dateRange: DateRange | undefined
 }
 
+interface LocationState {
+  city: string
+  coordinates: {
+    lat: number
+    lng: number
+  }
+}
+
 const Listings = (): JSX.Element => {
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
-  const GAINESVILLE_CENTER = { lat: 29.6516, lng: -82.3248 }
+  const location = useLocation()
+  const locationState = location.state as LocationState | null
+  const DEFAULT_CENTER = { lat: 29.6516, lng: -82.3248 }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [mapCenter, setMapCenter] = useState(
+    locationState?.coordinates ?? DEFAULT_CENTER
+  )
   const [listings, setListings] = useState<Listing[]>([])
   const [filteredListings, setFilteredListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,7 +52,16 @@ const Listings = (): JSX.Element => {
       try {
         const data = await listingsService.getListings()
         setListings(data)
-        setFilteredListings(data)
+
+        // Filter listings by city if one was selected
+        if (locationState?.city) {
+          const cityFilteredListings = data.filter(
+            listing => listing.city.toLowerCase() === locationState.city.toLowerCase()
+          )
+          setFilteredListings(cityFilteredListings)
+        } else {
+          setFilteredListings(data)
+        }
       } catch (err) {
         setError('Failed to fetch listings')
         console.error(err)
@@ -47,7 +71,7 @@ const Listings = (): JSX.Element => {
     }
 
     void fetchListings()
-  }, [])
+  }, [locationState?.city])
 
   // when a user clicks anything besides a listing card, deselect
   useEffect(() => {
@@ -134,6 +158,7 @@ const Listings = (): JSX.Element => {
                 <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
                 <Input
                   placeholder='Search by location'
+                  value={locationState?.city ?? 'Gainesville, FL'}
                   className='pl-10 border-amber-200 focus:border-amber-500'
                 />
               </div>
@@ -159,7 +184,7 @@ const Listings = (): JSX.Element => {
         <div className='w-3/4 bg-amber-50'>
           <div className='h-full flex items-center justify-center text-amber-700'>
             <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
-              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={GAINESVILLE_CENTER} disableDefaultUI={true} gestureHandling={'greedy'}>
+              <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={mapCenter} disableDefaultUI={true} gestureHandling={'greedy'}>
                 <MapContent filteredListings={filteredListings} selectedListing={selectedListing} />
               </Map>
             </APIProvider>

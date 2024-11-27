@@ -66,13 +66,14 @@ function getStateName (abbreviation: string): string | null {
 }
 
 interface CityAutocompleteProps {
-  onSelect: (cityState: string) => void
+  onSelect: (cityState: string, lat?: number, lng?: number) => void
+  onSubmit?: () => void
 }
 const libraries: Array<'places' | 'drawing' | 'geometry' | 'localContext' | 'visualization'> = ['places']
 
-const CityAutocomplete = ({ onSelect }: CityAutocompleteProps): JSX.Element => {
+const CityAutocomplete = ({ onSelect, onSubmit }: CityAutocompleteProps): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [open, setOpen] = useState(false)
+  const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null)
   const [value, setValue] = useState('')
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([])
   const [autocompleteService, setAutocompleteService] =
@@ -88,10 +89,30 @@ const CityAutocomplete = ({ onSelect }: CityAutocompleteProps): JSX.Element => {
   useEffect(() => {
     if (!isLoaded) return
     setAutocompleteService(new google.maps.places.AutocompleteService())
+    setGeocoder(new google.maps.Geocoder())
   }, [isLoaded])
 
   const formatLocation = (mainText: string, secondaryText: string): string => {
     return `${mainText}, ${secondaryText}`
+  }
+
+  const getCoordinates = async (placeId: string): Promise<{ lat: number; lng: number } | null> => {
+    if (!geocoder) return null
+
+    try {
+      const result = await geocoder.geocode({ placeId })
+      if (result.results[0]?.geometry?.location) {
+        const location = result.results[0].geometry.location
+        return {
+          lat: location.lat(),
+          lng: location.lng()
+        }
+      }
+    } catch (error) {
+      console.error('Geocoding error')
+    }
+
+    return null
   }
 
   const fetchPredictions = useCallback(async (input: string) => {
@@ -126,16 +147,34 @@ const CityAutocomplete = ({ onSelect }: CityAutocompleteProps): JSX.Element => {
     return () => { clearTimeout(timer) }
   }, [value, fetchPredictions])
 
-  const handleSelectPrediction = (prediction: google.maps.places.AutocompletePrediction) => {
+  const processPredictionSelection = async (prediction: google.maps.places.AutocompletePrediction) => {
     const formattedLocation = formatLocation(
       prediction.structured_formatting.main_text,
       prediction.structured_formatting.secondary_text
     )
     setValue(formattedLocation)
-    onSelect(formattedLocation)
-    setOpen(false)
+
+    const coordinates = await getCoordinates(prediction.place_id)
+    onSelect(formattedLocation, coordinates?.lat, coordinates?.lng)
+    setPredictions([]) // Clear predictions immediately
+
     // Keep focus on input after selection
     inputRef.current?.focus()
+    if (coordinates) {
+      onSubmit?.()
+    }
+  }
+
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && predictions.length > 0) {
+      e.preventDefault() // Prevent form submission
+      await processPredictionSelection(predictions[0])
+    }
+  }
+
+  const handleSelectPrediction = async (e: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLInputElement>, prediction: google.maps.places.AutocompletePrediction) => {
+    e.preventDefault()
+    await processPredictionSelection(prediction)
   }
 
   return (
@@ -150,13 +189,8 @@ const CityAutocomplete = ({ onSelect }: CityAutocompleteProps): JSX.Element => {
           value={value}
           onChange={(e) => {
             setValue(e.target.value)
-            setOpen(true)
           }}
-          onFocus={() => {
-            if (predictions.length > 0) {
-              setOpen(true)
-            }
-          }}
+          onKeyDown={handleKeyDown}
         />
       </div>
       {predictions.length > 0 && (
@@ -172,10 +206,7 @@ const CityAutocomplete = ({ onSelect }: CityAutocompleteProps): JSX.Element => {
                 <button
                   key={prediction.place_id}
                   className="w-full text-left px-2 py-2 hover:bg-amber-50 rounded-lg flex justify-between items-center"
-                  onClick={() => { handleSelectPrediction(prediction) }}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                  }}
+                  onClick={(e) => { void handleSelectPrediction(e, prediction) }}
                 >
                   <span className="font-medium">{city}</span>
                   <span className="text-gray-600">{state}</span>

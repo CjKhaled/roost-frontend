@@ -19,6 +19,9 @@ export interface APIListing {
   imageUrl: string[]
   amenities: AmenityType[]
   utilities: UtilityType[]
+  city: string
+  cityLat: number
+  cityLng: number
   strictParking: boolean
   strictNoisePolicy: boolean
   guestsAllowed: boolean
@@ -45,6 +48,9 @@ export interface Listing {
   description: string
   amenities: AmenityType[]
   utilities: UtilityType[]
+  city: string
+  cityLat: number
+  cityLng: number
   policies: {
     strictParking?: boolean
     strictNoisePolicy?: boolean
