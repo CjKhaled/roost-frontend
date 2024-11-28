@@ -73,6 +73,9 @@ describe('ListingsService', () => {
         },
         bedCount: 2,
         bathCount: 1,
+        city: 'Gainesville, FL',
+        cityLat: 29.6519563,
+        cityLng: -82.324998,
         createdAt: new Date('2024-01-01T00:00:00.000Z'),
         updatedAt: new Date('2024-01-01T00:00:00.000Z'),
         listerId: 'user123'

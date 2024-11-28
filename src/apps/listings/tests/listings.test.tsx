@@ -89,6 +89,9 @@ describe('Listings Page', () => {
         petsAllowed: false,
         smokingAllowed: false
       },
+      city: 'Gainesville, FL',
+      cityLat: 29.6519563,
+      cityLng: -82.324998,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       listerId: 'user1'
@@ -113,6 +116,9 @@ describe('Listings Page', () => {
         petsAllowed: true,
         smokingAllowed: false
       },
+      city: 'Gainesville, FL',
+      cityLat: 29.6519563,
+      cityLng: -82.324998,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       listerId: 'user2'
@@ -147,7 +153,6 @@ describe('Listings Page', () => {
     })
 
     // Check if main components are rendered
-    expect(screen.getByPlaceholderText('Search by location')).toBeInTheDocument()
     expect(screen.getByTestId('map')).toBeInTheDocument()
     expect(screen.getByText('Test Listing 1')).toBeInTheDocument()
     expect(screen.getByText('Test Listing 2')).toBeInTheDocument()

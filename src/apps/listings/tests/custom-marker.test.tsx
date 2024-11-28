@@ -57,6 +57,9 @@ describe('Custom Advanced Marker', () => {
       petsAllowed: false,
       smokingAllowed: false
     },
+    city: 'Gainesville, FL',
+    cityLat: 29.6519563,
+    cityLng: -82.324998,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     listerId: 'user1'
