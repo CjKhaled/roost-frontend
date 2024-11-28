@@ -187,6 +187,13 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
     return format(date, 'LLL dd, y')
   }
 
+  const formatAmenityLabel = (amenity: string): string => {
+    return amenity
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="form-dialog">
@@ -227,7 +234,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                 </FormItem>
               )}
             />
-
+{/* to do, allow users to input current location for prefill */}
             <FormField
               control={form.control}
               name="address"
@@ -235,7 +242,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea {...field} required />
+                    <Input {...field} required />
                   </FormControl>
                 </FormItem>
               )}
@@ -412,7 +419,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                           />
                         </FormControl>
                         <FormLabel className="text-sm font-normal">
-                          {amenity.replace(/_/g, ' ')}
+                          {formatAmenityLabel(amenity.replace(/_/g, ' '))}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -444,7 +451,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                           />
                         </FormControl>
                         <FormLabel className="text-sm font-normal">
-                          {utility}
+                          {formatAmenityLabel(utility.replace(/_/g, ' '))}
                         </FormLabel>
                       </FormItem>
                     )}
