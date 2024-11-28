@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  Search,
   Leaf
 } from 'lucide-react'
-import { Input } from '../../../components/ui/input'
-
 import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import FilterPopover from '../components/FilterPopover'
 import { type DateRange } from 'react-day-picker'
@@ -14,6 +11,7 @@ import { type Listing, type AmenityType } from '../types/listing'
 import { listingsService } from '../services/listing'
 import MapContent from '../components/MapContent'
 import { useLocation } from 'react-router-dom'
+import MapsCityAutocomplete from '../components/MapsCityAutocomplete'
 
 interface FilterState {
   price: number
@@ -46,17 +44,19 @@ const Listings = (): JSX.Element => {
   const [error, setError] = useState<string | null>(null)
   const [selectedListing, setSelectedListing] = useState<string | null>(null)
   const listingsRef = useRef<HTMLDivElement>(null)
+  const [selectedCity, setSelectedCity] = useState(locationState?.city ?? '')
 
   useEffect(() => {
     const fetchListings = async () => {
       try {
+        setIsLoading(true)
         const data = await listingsService.getListings()
         setListings(data)
 
-        // Filter listings by city if one was selected
-        if (locationState?.city) {
+        // Filter listings by city if one is selected
+        if (selectedCity) {
           const cityFilteredListings = data.filter(
-            listing => listing.city.toLowerCase() === locationState.city.toLowerCase()
+            listing => listing.city.toLowerCase() === selectedCity.toLowerCase()
           )
           setFilteredListings(cityFilteredListings)
         } else {
@@ -71,7 +71,7 @@ const Listings = (): JSX.Element => {
     }
 
     void fetchListings()
-  }, [locationState?.city])
+  }, [selectedCity])
 
   // when a user clicks anything besides a listing card, deselect
   useEffect(() => {
@@ -95,6 +95,13 @@ const Listings = (): JSX.Element => {
       setSelectedListing(null)
     } else {
       setSelectedListing(listing.id)
+    }
+  }
+
+  const handleCitySelect = (cityState: string, lat?: number, lng?: number) => {
+    setSelectedCity(cityState)
+    if (lat && lng) {
+      setMapCenter({ lat, lng })
     }
   }
 
@@ -152,14 +159,12 @@ const Listings = (): JSX.Element => {
               <span className='text-3xl font-bold text-amber-900'>Roost</span>
             </div>
 
-            {/* Search and Controls Section - Todo, make it so users can search for a city */}
+            {/* Search bar section */}
             <div className='flex-1 flex gap-4 items-center'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-                <Input
-                  placeholder='Search by location'
-                  value={locationState?.city ?? 'Gainesville, FL'}
-                  className='pl-10 border-amber-200 focus:border-amber-500'
+                <MapsCityAutocomplete
+                  onSelect={handleCitySelect}
+                  initialValue={selectedCity}
                 />
               </div>
               <FilterPopover onFiltersChange={handleFiltersChange} listings={listings} />
@@ -169,21 +174,34 @@ const Listings = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Split View */}
-      <div className='flex-1 flex overflow-hidden'>
+      {/* Split View - This creates the parent stacking context */}
+      <div className='flex-1 flex overflow-hidden relative'>
         {/* Listings Panel */}
         <div className='w-1/4 overflow-y-auto p-6 border-r' ref={listingsRef}>
-          <div className='grid grid-cols-1 gap-6'>
-            {filteredListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} isSelected={selectedListing === listing.id} onClick={() => { handleListingClick(listing) }} />
-            ))}
-          </div>
+          {filteredListings.length > 0
+            ? (
+            <div className='grid grid-cols-1 gap-6'>
+              {filteredListings.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  isSelected={selectedListing === listing.id}
+                  onClick={() => { handleListingClick(listing) }}
+                />
+              ))}
+            </div>
+              )
+            : (
+            <div className="flex items-center justify-center h-full text-amber-700">
+              No listings found
+            </div>
+              )}
         </div>
 
-        {/* Map Panel */}
+        {/* Map Panel - Give this a lower z-index */}
         <div className='w-3/4 bg-amber-50'>
           <div className='h-full flex items-center justify-center text-amber-700'>
-            <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
+            <APIProvider apiKey={MAPS_API_KEY} libraries={['marker', 'places']}>
               <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={mapCenter} disableDefaultUI={true} gestureHandling={'greedy'}>
                 <MapContent filteredListings={filteredListings} selectedListing={selectedListing} />
               </Map>

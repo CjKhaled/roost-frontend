@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useJsApiLoader } from '@react-google-maps/api'
 import { Search } from 'lucide-react'
 import { Input } from '../../../components/ui/input'
+import { createPortal } from 'react-dom'
 
 // if spaces, have to use quotes
 const stateAbbreviations: Record<string, string> = {
@@ -65,42 +65,50 @@ function getStateName (abbreviation: string): string | null {
   return abbreviationToName[abbreviation.toUpperCase()] || null
 }
 
-interface CityAutocompleteProps {
+interface MapsCityAutocompleteProps {
   onSelect: (cityState: string, lat?: number, lng?: number) => void
   onSubmit?: () => void
   initialValue?: string
 }
-const libraries: Array<'places' | 'drawing' | 'geometry' | 'localContext' | 'visualization'> = ['places']
 
-const CityAutocomplete = ({ onSelect, onSubmit, initialValue }: CityAutocompleteProps): JSX.Element => {
+const MapsCityAutocomplete = ({ onSelect, onSubmit, initialValue }: MapsCityAutocompleteProps): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [geocoder, setGeocoder] = useState<google.maps.Geocoder | null>(null)
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue ?? '')
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([])
   const [autocompleteService, setAutocompleteService] =
       useState<google.maps.places.AutocompleteService | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
-
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: MAPS_API_KEY,
-    libraries
-  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [showDropdown, setShowDropdown] = useState(false)
 
   useEffect(() => {
-    if (initialValue) {
-      setValue(initialValue)
+    const checkGoogleMapsLoaded = () => {
+      if (window.google?.maps?.places) {
+        try {
+          setAutocompleteService(new window.google.maps.places.AutocompleteService())
+          setGeocoder(new window.google.maps.Geocoder())
+          setIsLoading(false)
+        } catch (error) {
+          console.error('Error initializing Google Maps services:', error)
+        }
+      } else {
+        // If not loaded yet, check again in a moment
+        setTimeout(checkGoogleMapsLoaded, 100)
+      }
     }
-  }, [initialValue])
 
-  useEffect(() => {
-    if (!isLoaded) return
-    setAutocompleteService(new google.maps.places.AutocompleteService())
-    setGeocoder(new google.maps.Geocoder())
-  }, [isLoaded])
+    checkGoogleMapsLoaded()
+
+    return () => {
+      setAutocompleteService(null)
+      setGeocoder(null)
+    }
+  }, [])
 
   const formatLocation = (mainText: string, secondaryText: string): string => {
-    return `${mainText}, ${secondaryText}`
+    const state = secondaryText.split(',')[0].trim()
+    return `${mainText}, ${state}`
   }
 
   const getCoordinates = async (placeId: string): Promise<{ lat: number; lng: number } | null> => {
@@ -123,7 +131,7 @@ const CityAutocomplete = ({ onSelect, onSubmit, initialValue }: CityAutocomplete
   }
 
   const fetchPredictions = useCallback(async (input: string) => {
-    if (!autocompleteService || !input) {
+    if (!autocompleteService || !input || isLoading) {
       setPredictions([])
       return
     }
@@ -139,7 +147,7 @@ const CityAutocomplete = ({ onSelect, onSubmit, initialValue }: CityAutocomplete
       console.error('Error fetching predictions:', error)
       setPredictions([])
     }
-  }, [autocompleteService])
+  }, [autocompleteService, isLoading])
 
   useEffect(() => {
     if (!value) {
@@ -159,14 +167,16 @@ const CityAutocomplete = ({ onSelect, onSubmit, initialValue }: CityAutocomplete
       prediction.structured_formatting.main_text,
       prediction.structured_formatting.secondary_text
     )
+
+    // Clear predictions immediately before async operations
+    setPredictions([])
+    setShowDropdown(false)
+
     setValue(formattedLocation)
 
     const coordinates = await getCoordinates(prediction.place_id)
     onSelect(formattedLocation, coordinates?.lat, coordinates?.lng)
-    setPredictions([]) // Clear predictions immediately
 
-    // Keep focus on input after selection
-    inputRef.current?.focus()
     if (coordinates) {
       onSubmit?.()
     }
@@ -184,24 +194,63 @@ const CityAutocomplete = ({ onSelect, onSubmit, initialValue }: CityAutocomplete
     await processPredictionSelection(prediction)
   }
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null)
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (containerRef.current && predictions.length > 0) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width
+        })
+      } else {
+        setDropdownPosition(null)
+      }
+    }
+
+    updatePosition()
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [predictions.length])
+
+  // ... (keep existing prediction and selection handling)
+
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-amber-400 h-5 w-5" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search by city..."
-          className="w-full pl-4 py-6 text-lg border-2 border-amber-200 rounded-lg focus:border-amber-500 focus:ring-amber-500 bg-white/80 backdrop-blur-sm"
+          placeholder={isLoading ? 'Loading...' : 'Search by location'}
+          disabled={isLoading}
+          className="pl-10 border-amber-200 focus:border-amber-500"
           value={value}
           onChange={(e) => {
+            setShowDropdown(true)
             setValue(e.target.value)
           }}
           onKeyDown={handleKeyDown}
         />
       </div>
-      {predictions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white rounded-lg border shadow-lg">
+
+      {dropdownPosition && predictions.length > 0 && showDropdown && createPortal(
+        <div
+          className="fixed bg-white rounded-lg border shadow-lg mt-1 z-[9999]"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`
+          }}
+        >
           <div className="max-h-[300px] overflow-auto p-2">
             {predictions.map((prediction) => {
               const city = prediction.structured_formatting.main_text
@@ -221,10 +270,11 @@ const CityAutocomplete = ({ onSelect, onSubmit, initialValue }: CityAutocomplete
               )
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
 }
 
-export default CityAutocomplete
+export default MapsCityAutocomplete
