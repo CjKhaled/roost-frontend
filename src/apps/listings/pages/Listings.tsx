@@ -44,7 +44,7 @@ const Listings = (): JSX.Element => {
   const [error, setError] = useState<string | null>(null)
   const [selectedListing, setSelectedListing] = useState<string | null>(null)
   const listingsRef = useRef<HTMLDivElement>(null)
-  const [selectedCity, setSelectedCity] = useState(locationState?.city ?? '')
+  const [selectedCity, setSelectedCity] = useState(locationState?.city ?? 'Gainesville, FL')
 
   useEffect(() => {
     const fetchListings = async () => {

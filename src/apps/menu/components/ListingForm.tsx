@@ -19,7 +19,7 @@ import { Switch } from '../../../components/ui/switch'
 import { Checkbox } from '../../../components/ui/checkbox'
 import { useForm } from 'react-hook-form'
 import { Calendar as CalendarComponent } from '../../../components/ui/calendar'
-import { Calendar as CalendarIcon } from 'lucide-react'
+import { Calendar as CalendarIcon, MapPin } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
 import { format } from 'date-fns'
 import { cn } from '../../../lib/utils'
@@ -146,6 +146,21 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
     }
   }, [mode, initialData, form, isOpen])
 
+  const handleGetLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Current location:', position)
+
+          form.setValue('location.lat', position.coords.latitude.toString())
+          form.setValue('location.lng', position.coords.longitude.toString())
+        }
+      )
+    } else {
+      console.error('Geolocation is not supported by this browser.')
+    }
+  }
+
   const handleSubmit = (data: ListingFormData) => {
     const transformedData = {
       name: data.name,
@@ -234,7 +249,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                 </FormItem>
               )}
             />
-{/* to do, allow users to input current location for prefill */}
+
             <FormField
               control={form.control}
               name="address"
@@ -249,7 +264,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
+            <FormField
                 control={form.control}
                 name="location.lat"
                 render={({ field }) => (
@@ -274,6 +289,17 @@ const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFo
                   </FormItem>
                 )}
               />
+              <div className="col-span-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGetLocation}
+                  className="w-full mb-2"
+                >
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Use Current Location
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
