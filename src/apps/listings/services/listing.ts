@@ -130,6 +130,26 @@ export class ListingsService {
     }
   }
 
+  async uploadPhoto (formData: FormData) {
+    try {
+      const response = await fetch(`${this.API_URL}/listings/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+      console.log(data)
+      return data.urls
+    } catch (error) {
+      console.log('Error uploading photos:', error)
+    }
+  }
+
   async createListing (listing: Partial<Listing>): Promise<Listing> {
     try {
       const response = await fetch(`${this.API_URL}/listings/create`, {
