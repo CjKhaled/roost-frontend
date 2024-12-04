@@ -21,6 +21,12 @@ interface UserResponse {
   user: User
 }
 
+interface UpdateUserData {
+  firstName?: string
+  lastName?: string
+  email?: string
+}
+
 export const transformAPIListing = (apiListing: APIListing): Listing => {
   return {
     id: apiListing.id,
@@ -312,6 +318,31 @@ export class ListingsService {
       }
     } catch (error) {
       console.error('Error toggling favorite:', error)
+      throw error
+    }
+  }
+
+  async updateUser (userId: string, userData: UpdateUserData): Promise<User> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/update/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData)
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        throw new Error(error)
+      }
+
+      const data = await response.json()
+      return data.user
+    } catch (error) {
+      console.error('Error updating user:', error)
       throw error
     }
   }
