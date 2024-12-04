@@ -35,6 +35,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
 import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
 import { useAuth } from '../../../context/AuthContext'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../../components/ui/tooltip'
 
 const ListingDetails = (): JSX.Element => {
   const { id } = useParams<{ id: string }>()
@@ -48,8 +49,7 @@ const ListingDetails = (): JSX.Element => {
   const [lister, setLister] = useState<Lister | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
   const [isListerLoading, setIsListerLoading] = useState<boolean>(true)
-  const { user: currentUser } = useAuth()
-  const isOwner = currentUser?.id === listing?.listerId
+  const { user } = useAuth()
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -77,10 +77,30 @@ const ListingDetails = (): JSX.Element => {
   }, [id, navigate])
 
   useEffect(() => {
-    if (!listing) return
-    const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
-    if (favorites.includes(listing.id)) setIsFavorited(true)
-  }, [listing])
+    const checkIfFavorite = async () => {
+      try {
+        if (!user) return
+        const userFavorites = await listingsService.getUserFavorites()
+        userFavorites.forEach((favorite) => {
+          if (favorite.id === id) {
+            setIsFavorited(true)
+          }
+        })
+      } catch (error) {
+        console.log('Error loading favorites:', error)
+      }
+    }
+    void checkIfFavorite()
+  }, [user])
+
+  const toggleFavorite = async (id: string): Promise<void> => {
+    try {
+      await listingsService.toggleFavorite(id)
+      setIsFavorited(prev => !prev)
+    } catch (error) {
+      console.log('Error toggling favorite:', error)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -143,24 +163,31 @@ const ListingDetails = (): JSX.Element => {
               Back to Listings
             </Button>
             <div className="flex gap-2">
-              <Button
-                data-testid="save-button"
-                variant="outline"
-                className="border-amber-200 hover:bg-amber-50"
-                onClick={() => {
-                  if (!isOwner) {
-                    const favorites = JSON.parse(localStorage.getItem('favoritedListings') ?? '[]')
-                    const updatedFavorites = isFavorited
-                      ? favorites.filter((fav: string) => fav !== listing.id) // Remove if already favorited
-                      : [...favorites, listing.id]
-                    localStorage.setItem('favoritedListings', JSON.stringify(updatedFavorites))
-                    setIsFavorited(!isFavorited)
-                  }
-                }}
-              >
-                <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
-                {isFavorited ? 'Saved' : 'Save'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      data-testid="save-button"
+                      variant="outline"
+                      className="border-amber-200 hover:bg-amber-50"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (user && listing) {
+                          void toggleFavorite(listing.id)
+                        }
+                      }}
+                    >
+                      <Heart
+                        className={`h-4 w-4 mr-2 ${
+                          isFavorited ? 'fill-red-500 stroke-red-500' : ''
+                        }`}
+                      />
+                      {isFavorited ? 'Saved' : 'Save'}
+                    </Button>
+                  </TooltipTrigger>
+                  {!user && <TooltipContent>You need to be logged in!</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
               <ProfileMenu />
             </div>
           </div>

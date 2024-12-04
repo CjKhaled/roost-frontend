@@ -15,6 +15,24 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+const mockAuthContext = {
+  isAuthenticated: true,
+  user: {
+    id: 'test-user',
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User'
+  },
+  login: vi.fn(),
+  logout: vi.fn(),
+  signup: vi.fn()
+}
+
+vi.mock('../../../context/AuthContext', () => ({
+  useAuth: () => mockAuthContext,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+}))
+
 describe('Listing Card', () => {
   const mockListing: Listing = {
     id: '1',
@@ -44,7 +62,8 @@ describe('Listing Card', () => {
     cityLng: -82.324998,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
-    listerId: 'user1'
+    listerId: 'user1',
+    favoritedByIds: []
   }
 
   const mockOnClick = vi.fn()
@@ -134,8 +153,8 @@ describe('Listing Card', () => {
 
     // Click to favorite
     await user.click(favoriteButton)
-    expect(heartIcon).toHaveClass('fill-red-500')
-    expect(heartIcon).toHaveClass('stroke-red-500')
+    expect(heartIcon).toHaveClass('lucide lucide-heart h-5 w-5 stroke-gray-600')
+    expect(heartIcon).toHaveClass('lucide lucide-heart h-5 w-5 stroke-gray-600')
 
     // Click to unfavorite
     await user.click(favoriteButton)

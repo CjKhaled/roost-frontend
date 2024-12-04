@@ -4,4 +4,5 @@ export interface User {
   lastName: string
   email: string
   createdListings: Array<{ id: string }>
+  favorites: Array<{ id: string }>
 }

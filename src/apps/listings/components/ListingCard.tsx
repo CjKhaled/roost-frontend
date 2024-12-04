@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   MapPin,
   Calendar as CalendarIcon,
@@ -11,32 +11,56 @@ import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { type Listing } from '../types/listing'
+import { listingsService } from '../services/listing'
+import { useAuth } from '../../../context/AuthContext'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../../components/ui/tooltip'
 
 interface ListingCardProps {
   listing: Listing
   isSelected?: boolean
   onClick?: () => void
+  onFavoriteClick?: (listing: Listing) => void
+  isFavoritesPage?: boolean
 }
 
-const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps): JSX.Element => {
+const ListingCard = ({ listing, isSelected = false, onClick, onFavoriteClick, isFavoritesPage }: ListingCardProps): JSX.Element => {
   const [favorites, setFavorites] = useState(new Set<string>())
   const [hoveredListing, setHoveredListing] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const handleClick = () => {
     navigate(`/listings/${listing.id}`)
   }
 
-  const toggleFavorite = (id: string): void => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev)
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id)
-      } else {
-        newFavorites.add(id)
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        if (!user) return
+        const userFavorites = await listingsService.getUserFavorites()
+        setFavorites(new Set(userFavorites.map(f => f.id)))
+      } catch (error) {
+        console.log('Error loading favorites:', error)
       }
-      return newFavorites
-    })
+    }
+    void loadFavorites()
+  }, [user])
+
+  const toggleFavorite = async (id: string): Promise<void> => {
+    try {
+      await listingsService.toggleFavorite(id)
+      setFavorites(prev => {
+        const newFavorites = new Set(prev)
+        if (newFavorites.has(id)) {
+          newFavorites.delete(id)
+        } else {
+          newFavorites.add(id)
+        }
+        return newFavorites
+      })
+    } catch (error) {
+      console.log('Error toggling favorite:', error)
+    }
   }
 
   const formatDateRange = (from: string, to: string): string => {
@@ -88,23 +112,34 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
             `}>
               ${listing.price}/mo
             </Badge>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                toggleFavorite(listing.id)
-              }}
-              aria-label='favorite'
-              className='p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors'
-            >
-              <Heart
-                className={`h-5 w-5 ${
-                  favorites.has(listing.id)
-                    ? 'fill-red-500 stroke-red-500'
-                    : 'stroke-gray-600'
-                }`}
-              />
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      if (isFavoritesPage && onFavoriteClick) {
+                        onFavoriteClick(listing)
+                      } else if (user) {
+                        void toggleFavorite(listing.id)
+                      }
+                    }}
+                    aria-label='favorite'
+                    className='p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors'
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${
+                        favorites.has(listing.id)
+                          ? 'fill-red-500 stroke-red-500'
+                          : 'stroke-gray-600'
+                      }`}
+                    />
+                  </button>
+                </TooltipTrigger>
+                {!user && <TooltipContent><p>You need to be logged in!</p></TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardHeader>
 

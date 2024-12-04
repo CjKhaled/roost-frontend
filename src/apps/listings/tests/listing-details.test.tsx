@@ -161,7 +161,8 @@ const mockListing: Listing = {
   cityLng: -82.324998,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
-  listerId: 'user123'
+  listerId: 'user123',
+  favoritedByIds: []
 }
 
 const mockLister = {
@@ -169,7 +170,8 @@ const mockLister = {
   firstName: 'John',
   lastName: 'Doe',
   email: 'john@example.com',
-  createdListings: [{ id: '123' }]
+  createdListings: [{ id: '123' }],
+  favorites: []
 }
 
 const mockAuthContext = {
@@ -375,26 +377,5 @@ describe('Listing Details', () => {
     await user.click(messageButton)
 
     expect(mockNavigate).toHaveBeenCalledWith('/messages')
-  })
-
-  it('should add listing to local storage when saved and remove when unsaved', async () => {
-    const user = userEvent.setup()
-    renderComponent()
-
-    await waitFor(() => {
-      expect(screen.queryByText('Loading listing details...')).not.toBeInTheDocument()
-    })
-
-    const saveButton = screen.getByTestId('save-button')
-
-    // Click save button to save the listing
-    await user.click(saveButton)
-    expect(localStorage.getItem('favoritedListings')).toContain(mockListing.id)
-    expect(saveButton).toHaveTextContent('Saved')
-
-    // Click save button again to unsave the listing
-    await user.click(saveButton)
-    expect(localStorage.getItem('favoritedListings')).not.toContain(mockListing.id)
-    expect(saveButton).toHaveTextContent('Save')
   })
 })

@@ -3,7 +3,8 @@ import {
   MessageSquare,
   Settings,
   House,
-  LogOut
+  LogOut,
+  Heart
 } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import {
@@ -53,6 +54,12 @@ const ProfileMenu = (): JSX.Element => {
               <DropdownMenuItem className='flex items-center gap-2 hover:bg-amber-50 focus:bg-amber-50 cursor-pointer'>
                 <House className='h-4 w-4' />
                 <span>Manage Listings</span>
+              </DropdownMenuItem>
+            </Link>
+            <Link to='/favorites'>
+              <DropdownMenuItem className='flex items-center gap-2 hover:bg-amber-50 focus:bg-amber-50 cursor-pointer'>
+                <Heart className='h-4 w-4' />
+                <span>Favorites</span>
               </DropdownMenuItem>
             </Link>
             <Link to='/messages'>

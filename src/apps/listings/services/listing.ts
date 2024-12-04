@@ -14,6 +14,7 @@ interface User {
   lastName: string
   email: string
   createdListings: Array<{ id: string }>
+  favorites: Array<{ id: string }>
 }
 
 interface UserResponse {
@@ -52,7 +53,8 @@ export const transformAPIListing = (apiListing: APIListing): Listing => {
     bathCount: apiListing.bathCount,
     createdAt: new Date(apiListing.createdAt),
     updatedAt: new Date(apiListing.updatedAt),
-    listerId: apiListing.createdById
+    listerId: apiListing.createdById,
+    favoritedByIds: apiListing.favoritedByIds
   }
 }
 
@@ -276,6 +278,40 @@ export class ListingsService {
       return listings
     } catch (error) {
       console.error('Error fetching user listings:', error)
+      throw error
+    }
+  }
+
+  async getUserFavorites (): Promise<Listing[]> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/favorites`, {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch favorites')
+      }
+
+      const data = await response.json() as ListingsResponse
+      return data.listings.map(transformAPIListing)
+    } catch (error) {
+      console.error('Error fetching favorites:', error)
+      throw error
+    }
+  }
+
+  async toggleFavorite (listingId: string): Promise<void> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/favorites/${listingId}`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle favorite')
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
       throw error
     }
   }

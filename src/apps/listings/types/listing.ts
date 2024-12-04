@@ -28,6 +28,7 @@ export interface APIListing {
   petsAllowed: boolean
   smokingAllowed: boolean
   createdById: string
+  favoritedByIds: string[]
 }
 
 // frontend listing
@@ -63,6 +64,7 @@ export interface Listing {
   createdAt: Date
   updatedAt: Date
   listerId: string
+  favoritedByIds: string[]
 }
 
 export interface ListingResponse {
