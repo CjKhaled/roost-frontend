@@ -15,10 +15,17 @@ interface User {
   lastName: string
   email: string
   createdListings: Array<{ id: string }>
+  favorites: Array<{ id: string }>
 }
 
 interface UserResponse {
   user: User
+}
+
+interface UpdateUserData {
+  firstName?: string
+  lastName?: string
+  email?: string
 }
 
 export const transformAPIListing = (apiListing: APIListing): Listing => {
@@ -39,6 +46,9 @@ export const transformAPIListing = (apiListing: APIListing): Listing => {
     imageUrl: apiListing.imageUrl,
     amenities: apiListing.amenities,
     utilities: apiListing.utilities,
+    city: apiListing.city,
+    cityLat: apiListing.cityLat,
+    cityLng: apiListing.cityLng,
     policies: {
       strictParking: apiListing.strictParking,
       strictNoisePolicy: apiListing.strictNoisePolicy,
@@ -50,7 +60,8 @@ export const transformAPIListing = (apiListing: APIListing): Listing => {
     bathCount: apiListing.bathCount,
     createdAt: new Date(apiListing.createdAt),
     updatedAt: new Date(apiListing.updatedAt),
-    listerId: apiListing.createdById
+    listerId: apiListing.createdById,
+    favoritedByIds: apiListing.favoritedByIds
   }
 }
 
@@ -69,6 +80,24 @@ export class ListingsService {
 
       const data = await response.json() as ListingsResponse
       return data.listings.map(transformAPIListing)
+    } catch (error) {
+      console.error('Error fetching listings:', error)
+      throw error
+    }
+  }
+
+  async getUserWhoCreatedListing (id: string): Promise<User> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/${id}`, {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user')
+      }
+
+      const data = await response.json() as UserResponse
+      return data.user
     } catch (error) {
       console.error('Error fetching listings:', error)
       throw error
@@ -109,6 +138,43 @@ export class ListingsService {
     }
   };
 
+  async getUserByID (listerID: string): Promise<{ firstName: string; lastName: string }> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/${listerID}`, {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        throw new Error('Failed to fetch lister')
+      }
+      const { user } = await response.json() // Destructure the `user` object
+      console.log(user)
+      return user
+    } catch (error) {
+      console.error('Error fetching user:', error)
+      throw error
+    }
+  }
+
+  async uploadPhoto (formData: FormData) {
+    try {
+      const response = await fetch(`${this.API_URL}/listings/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+      console.log(data)
+      return data.urls
+    } catch (error) {
+      console.log('Error uploading photos:', error)
+    }
+  }
+
   async createListing (listing: Partial<Listing>): Promise<Listing> {
     try {
       const response = await fetch(`${this.API_URL}/listings/create`, {
@@ -140,7 +206,7 @@ export class ListingsService {
       })
 
       if (!response.ok) {
-        const error = await response.text()
+        const error = await response.json()
         console.log(error)
         throw new Error('Failed to create listing')
       }
@@ -235,6 +301,65 @@ export class ListingsService {
       return listings
     } catch (error) {
       console.error('Error fetching user listings:', error)
+      throw error
+    }
+  }
+
+  async getUserFavorites (): Promise<Listing[]> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/favorites`, {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch favorites')
+      }
+
+      const data = await response.json() as ListingsResponse
+      return data.listings.map(transformAPIListing)
+    } catch (error) {
+      console.error('Error fetching favorites:', error)
+      throw error
+    }
+  }
+
+  async toggleFavorite (listingId: string): Promise<void> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/favorites/${listingId}`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle favorite')
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      throw error
+    }
+  }
+
+  async updateUser (userId: string, userData: UpdateUserData): Promise<User> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/update/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData)
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        throw new Error(error)
+      }
+
+      const data = await response.json()
+      return data.user
+    } catch (error) {
+      console.error('Error updating user:', error)
       throw error
     }
   }

@@ -3,12 +3,8 @@ import { authRoutes } from './apps/auth/routes'
 import { listingsRoutes } from './apps/listings/routes'
 import { menuRoutes } from './apps/menu/routes'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { homeRoutes } from './apps/home/routes'
 import App from './App'
-
-const protectedListingsRoutes = listingsRoutes.map(route => ({
-  ...route,
-  element: <ProtectedRoute>{route.element}</ProtectedRoute>
-}))
 
 const protectedMenuRoutes = menuRoutes.map(route => ({
   ...route,
@@ -20,9 +16,10 @@ const routes: RouteObject[] = [
     path: '/',
     element: <App />,
     children: [
-      { index: true, element: <Navigate to='/login' /> },
+      { index: true, element: <Navigate to='/home' /> },
+      ...homeRoutes,
+      ...listingsRoutes,
       ...authRoutes,
-      ...protectedListingsRoutes,
       ...protectedMenuRoutes
     ]
   }

@@ -28,13 +28,16 @@ import {
   DialogClose
 } from '../../../components/ui/dialog'
 import ProfileMenu from '../components/ProfileMenu'
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps'
+import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import { type Listing } from '../types/listing'
+import { type User as Lister } from '../types/user'
 import { useParams, useNavigate } from 'react-router-dom'
 import { listingsService } from '../services/listing'
 import { useAuth } from '../../../context/AuthContext'
 import ChatComponent from '../../../components/ui/Chat'
 import type { Conversation } from '../types/conversation'
+import CustomAdvancedMarker from '../components/CustomAdvancedMarker'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../../components/ui/tooltip'
 
 const ListingDetails = (): JSX.Element => {
   const { user } = useAuth()
@@ -49,7 +52,10 @@ const ListingDetails = (): JSX.Element => {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+  const [lister, setLister] = useState<Lister | null>(null)
   const MAPS_API_KEY: string = import.meta.env.VITE_MAPS_API_KEY
+  const [isListerLoading, setIsListerLoading] = useState<boolean>(true)
+  const { user } = useAuth()
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -61,11 +67,15 @@ const ListingDetails = (): JSX.Element => {
       try {
         const data = await listingsService.getListingById(id)
         setListing(data)
+
+        const listerData = await listingsService.getUserWhoCreatedListing(data.listerId)
+        setLister(listerData)
       } catch (err) {
         setError('Failed to fetch listing details')
         console.error(err)
       } finally {
         setIsLoading(false)
+        setIsListerLoading(false)
       }
     }
 
@@ -84,6 +94,33 @@ const ListingDetails = (): JSX.Element => {
     }
     void fetchConversations()
   }, [user, listing])
+      
+   useEffect(() => {
+    const checkIfFavorite = async () => {
+      try {
+        if (!user) return
+        const userFavorites = await listingsService.getUserFavorites()
+        userFavorites.forEach((favorite) => {
+          if (favorite.id === id) {
+            setIsFavorited(true)
+          }
+        })
+      } catch (error) {
+        console.log('Error loading favorites:', error)
+      }
+    }
+    void checkIfFavorite()
+  }, [user])
+
+
+  const toggleFavorite = async (id: string): Promise<void> => {
+    try {
+      await listingsService.toggleFavorite(id)
+      setIsFavorited(prev => !prev)
+    } catch (error) {
+      console.log('Error toggling favorite:', error)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -202,6 +239,7 @@ const ListingDetails = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
+              data-testid="back-to-listings-button"
               variant="ghost"
               className="text-amber-700 hover:text-amber-800 hover:bg-amber-100"
               onClick={() => { window.history.back() }}
@@ -210,14 +248,31 @@ const ListingDetails = (): JSX.Element => {
               Back to Listings
             </Button>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="border-amber-200 hover:bg-amber-50"
-                onClick={() => { setIsFavorited(!isFavorited) }}
-              >
-                <Heart className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-red-500 stroke-red-500' : ''}`} />
-                {isFavorited ? 'Saved' : 'Save'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      data-testid="save-button"
+                      variant="outline"
+                      className="border-amber-200 hover:bg-amber-50"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (user && listing) {
+                          void toggleFavorite(listing.id)
+                        }
+                      }}
+                    >
+                      <Heart
+                        className={`h-4 w-4 mr-2 ${
+                          isFavorited ? 'fill-red-500 stroke-red-500' : ''
+                        }`}
+                      />
+                      {isFavorited ? 'Saved' : 'Save'}
+                    </Button>
+                  </TooltipTrigger>
+                  {!user && <TooltipContent>You need to be logged in!</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
               <ProfileMenu />
             </div>
           </div>
@@ -315,11 +370,9 @@ const ListingDetails = (): JSX.Element => {
                     <h3 className="font-semibold text-amber-900 mb-4">Location</h3>
                     <div className="aspect-[16/9] rounded-lg overflow-hidden">
                       <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-700 border border-amber-200">
-                        <APIProvider apiKey={MAPS_API_KEY}>
-                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location}>
-                            <AdvancedMarker key={listing.id} position={listing.location}>
-                              <Pin background='#b45309' />
-                            </AdvancedMarker>
+                        <APIProvider apiKey={MAPS_API_KEY} libraries={['marker']}>
+                          <Map mapId='a595f3d0fe04f9cf' defaultZoom={13} defaultCenter={listing.location} disableDefaultUI={true} gestureHandling={'greedy'}>
+                            <CustomAdvancedMarker listing={listing} />
                           </Map>
                         </APIProvider>
                       </div>
@@ -402,10 +455,20 @@ const ListingDetails = (): JSX.Element => {
                   <div className="pt-4 border-t border-amber-200">
                     <h3 className="font-semibold text-amber-900 mb-3">Lister</h3>
                     <div className="space-y-2 text-amber-700">
+                    {isListerLoading
+                      ? (
+                      <div>Loading...</div>
+                        )
+                      : lister
+                        ? (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>User</span>
+                        <span>{lister?.firstName} {lister?.lastName}</span>
                       </div>
+                          )
+                        : (
+                      <div>Lister not found</div>
+                          )}
                     </div>
                   </div>
 

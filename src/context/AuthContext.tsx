@@ -23,8 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuth = async (): Promise<void> => {
     try {
-      // We can use any protected endpoint to check auth status
-      const response = await fetch('http://localhost:3000/api/listings', {
+      const response = await fetch('http://localhost:3000/api/users', {
         credentials: 'include'
       })
 
@@ -38,13 +37,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         setUser(null)
-        if (response.status === 403) {
-          localStorage.removeItem('user')
-        }
       }
     } catch (error) {
       setUser(null)
-      localStorage.removeItem('user')
     } finally {
       setIsLoading(false)
     }

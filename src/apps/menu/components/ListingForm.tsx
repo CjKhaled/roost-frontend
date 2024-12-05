@@ -1,5 +1,5 @@
 import { Button } from '../../../components/ui/button'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -19,17 +19,17 @@ import { Switch } from '../../../components/ui/switch'
 import { Checkbox } from '../../../components/ui/checkbox'
 import { useForm } from 'react-hook-form'
 import { Calendar as CalendarComponent } from '../../../components/ui/calendar'
-import { Calendar as CalendarIcon } from 'lucide-react'
+import { Calendar as CalendarIcon, MapPin, X } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
 import { format } from 'date-fns'
 import { cn } from '../../../lib/utils'
 import { type Listing, type AmenityType, type UtilityType } from '../../listings/types/listing'
+import { listingsService } from '../../listings/services/listing'
 
 interface ListingFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: Partial<Listing>) => Promise<boolean>
-  error: string | null
+  onSubmit: (data: Partial<Listing>) => void
   initialData: Listing | null
   mode: 'create' | 'edit'
 }
@@ -74,7 +74,7 @@ const emptyFormValues = {
   price: '',
   bedCount: '',
   bathCount: '',
-  imageUrl: [''],
+  imageFiles: null,
   amenities: [] as AmenityType[],
   utilities: [] as UtilityType[],
   strictParking: false,
@@ -99,7 +99,7 @@ interface ListingFormData {
   price: string | number
   bedCount: string | number
   bathCount: string | number
-  imageUrl: string[]
+  imageFiles: FileList | null
   amenities: AmenityType[]
   utilities: UtilityType[]
   strictParking: boolean
@@ -113,10 +113,18 @@ interface ListingFormData {
   }
 }
 
-const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: ListingFormProps) => {
+interface ImagePreview {
+  url: string
+  file?: File
+  id: string
+}
+
+const ListingForm = ({ isOpen, onClose, onSubmit, initialData, mode }: ListingFormProps) => {
   const form = useForm<ListingFormData>({
     defaultValues: emptyFormValues
   })
+
+  const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([])
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
@@ -138,16 +146,99 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
           from: initialData.available.from,
           to: initialData.available.to
         },
-        imageUrl: initialData.imageUrl,
+        imageFiles: null,
         amenities: initialData.amenities,
         utilities: initialData.utilities
       })
+
+      if (initialData.imageUrl?.length) {
+        setImagePreviews(
+          initialData.imageUrl.map((url) => ({
+            url,
+            id: crypto.randomUUID()
+          }))
+        )
+      }
     } else {
       form.reset(emptyFormValues)
+      setImagePreviews([])
     }
   }, [mode, initialData, form, isOpen])
 
+  const handleGetLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Current location:', position)
+
+          form.setValue('location.lat', position.coords.latitude.toString())
+          form.setValue('location.lng', position.coords.longitude.toString())
+        }
+      )
+    } else {
+      console.error('Geolocation is not supported by this browser.')
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+
+    const newPreviews = files.map(async (file) => {
+      return await new Promise<ImagePreview>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          resolve({
+            url: reader.result as string,
+            file,
+            id: crypto.randomUUID()
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+
+    void Promise.all(newPreviews).then((newPreviewsArray) => {
+      setImagePreviews((prev) => [...prev, ...newPreviewsArray])
+    })
+
+    form.setValue('imageFiles', e.target.files)
+  }
+
+  const handleRemoveImage = (idToRemove: string) => {
+    setImagePreviews((prev) => prev.filter((preview) => preview.id !== idToRemove))
+
+    const remainingFiles = imagePreviews.filter((preview) => preview.id !== idToRemove)
+      .map((preview) => preview.file).filter((file): file is File => file !== undefined)
+
+    const newFileList = new DataTransfer()
+    remainingFiles.forEach((file) => newFileList.items.add(file))
+    form.setValue('imageFiles', newFileList.files)
+  }
+
   const handleSubmit = async (data: ListingFormData) => {
+    const filesToUpload = imagePreviews.filter(preview => preview.file)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      .map(preview => preview.file!)
+
+    const existingUrls = imagePreviews.filter(preview => !preview.file)
+      .map(preview => preview.url)
+
+    let newImageUrls: string[] = []
+    if (filesToUpload.length > 0) {
+      const formData = new FormData()
+      filesToUpload.forEach((file) => {
+        formData.append('image', file)
+      })
+
+      try {
+        newImageUrls = await listingsService.uploadPhoto(formData)
+        console.log(newImageUrls)
+      } catch (error) {
+        console.log('Error uploading files:', error)
+        return
+      }
+    }
+
     const transformedData = {
       name: data.name,
       description: data.description,
@@ -163,11 +254,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
         from: data.available?.from,
         to: data.available?.to
       },
-      imageUrl: Array.isArray(data.imageUrl)
-        ? data.imageUrl
-        : data.imageUrl
-          ? [data.imageUrl]
-          : [],
+      imageUrl: [...existingUrls, ...newImageUrls],
       amenities: data.amenities ?? [],
       utilities: data.utilities ?? [],
       policies: {
@@ -178,14 +265,21 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
         smokingAllowed: data.smokingAllowed
       }
     }
-    const submitSuccess = await onSubmit(transformedData)
-    console.log('submitSuccess', submitSuccess)
-    if (submitSuccess) onClose()
+
+    onSubmit(transformedData)
+    onClose()
   }
 
   const formatDate = (date: Date | undefined): string => {
     if (!date) return ''
     return format(date, 'LLL dd, y')
+  }
+
+  const formatAmenityLabel = (amenity: string): string => {
+    return amenity
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
   }
 
   return (
@@ -236,14 +330,14 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea {...field} required />
+                    <Input {...field} required />
                   </FormControl>
                 </FormItem>
               )}
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
+            <FormField
                 control={form.control}
                 name="location.lat"
                 render={({ field }) => (
@@ -268,6 +362,17 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
                   </FormItem>
                 )}
               />
+              <div className="col-span-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGetLocation}
+                  className="w-full mb-2"
+                >
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Use Current Location
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -370,21 +475,40 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
 
             <FormField
               control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
+              name="imageFiles"
+              render={({ field: { value, onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Property Images</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      required
-                      onChange={(e) => {
-                        // Convert single URL to array before setting value
-                        field.onChange([e.target.value])
-                      }}
-                      // Display first URL from array if it exists
-                      value={Array.isArray(field.value) ? field.value[0] : field.value}
-                    />
+                    <div className="space-y-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageChange}
+                        {...field}
+                      />
+                      {imagePreviews.length > 0 && (
+                        <div className="grid grid-cols-3 gap-4 mt-4">
+                          {imagePreviews.map((preview) => (
+                            <div key={preview.id} className="relative group">
+                              <img
+                                src={preview.url}
+                                alt="Property preview"
+                                className="w-full h-32 object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => { handleRemoveImage(preview.id) }}
+                                className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
@@ -413,7 +537,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
                           />
                         </FormControl>
                         <FormLabel className="text-sm font-normal">
-                          {amenity.replace(/_/g, ' ')}
+                          {formatAmenityLabel(amenity.replace(/_/g, ' '))}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -445,7 +569,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
                           />
                         </FormControl>
                         <FormLabel className="text-sm font-normal">
-                          {utility}
+                          {formatAmenityLabel(utility.replace(/_/g, ' '))}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -477,11 +601,7 @@ const ListingForm = ({ isOpen, onClose, onSubmit, error, initialData, mode }: Li
                 ))}
               </div>
             </div>
-            {error && (
-              <div className="bottom-0 left-0 right-0 p-4 bg-red-100 text-red-600 text-center">
-                {error}
-              </div>
-            )}
+
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel

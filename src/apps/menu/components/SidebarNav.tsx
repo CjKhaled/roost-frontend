@@ -1,5 +1,5 @@
 import { cn } from '../../../lib/utils'
-import { Leaf, Home, Building, MessageSquare, Settings } from 'lucide-react'
+import { Leaf, Home, Building, MessageSquare, Settings, Heart } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 
 interface DashboardLayoutProps {
@@ -21,6 +21,12 @@ const SidebarNav = ({ children }: DashboardLayoutProps) => {
       href: '/manage-listings',
       icon: <Building className="h-5 w-5" />,
       isActive: location.pathname === '/manage-listings'
+    },
+    {
+      title: 'Favorited Listings',
+      href: '/favorites',
+      icon: <Heart className='h-5 w-5' />,
+      isActive: location.pathname === '/favorites'
     },
     {
       title: 'Messages',

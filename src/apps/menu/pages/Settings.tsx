@@ -2,20 +2,11 @@ import { Card } from '../../../components/ui/card'
 import { Label } from '../../../components/ui/label'
 import { Input } from '../../../components/ui/input'
 import { Button } from '../../../components/ui/button'
-import { Switch } from '../../../components/ui/switch'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '../../../components/ui/select'
-import {
-  Bell,
   User,
-  Shield,
-  Globe
+  Shield
 } from 'lucide-react'
+import { useAuth } from '../../../context/AuthContext'
 
 const SettingsSection = ({
   title,
@@ -43,6 +34,7 @@ const SettingsSection = ({
 )
 
 const Settings = () => {
+  const { user } = useAuth()
   return (
     <div className="p-6 max-w-4xl">
       <h1 className="text-2xl mb-6">Settings</h1>
@@ -51,77 +43,40 @@ const Settings = () => {
         {/* Profile Settings */}
         <SettingsSection
           title="Profile Settings"
-          description="Manage your personal information and contact details"
+          description="Manage your personal information"
           icon={<User className="w-5 h-5 text-amber-600" />}
         >
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500"
-                />
-              </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                value={user?.firstName}
+                className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                type="text"
+                value={user?.lastName}
+                className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
+                value={user?.email}
                 className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 (555) 000-0000"
-                className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-        </SettingsSection>
-
-        {/* Notification Preferences */}
-        <SettingsSection
-          title="Notification Preferences"
-          description="Control how and when you receive notifications"
-          icon={<Bell className="w-5 h-5 text-amber-600" />}
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Email Notifications</Label>
-                <p className="text-sm text-amber-700">Receive updates via email</p>
-              </div>
-              <Switch />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Push Notifications</Label>
-                <p className="text-sm text-amber-700">Receive push notifications</p>
-              </div>
-              <Switch />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Marketing Communications</Label>
-                <p className="text-sm text-amber-700">Receive marketing updates</p>
-              </div>
-              <Switch />
-            </div>
+            <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+              Update Information
+            </Button>
           </div>
         </SettingsSection>
 
@@ -162,49 +117,10 @@ const Settings = () => {
           </div>
         </SettingsSection>
 
-        {/* Language and Region */}
-        <SettingsSection
-          title="Language and Region"
-          description="Set your preferred language and regional settings"
-          icon={<Globe className="w-5 h-5 text-amber-600" />}
-        >
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <Select>
-                <SelectTrigger className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Time Zone</Label>
-              <Select>
-                <SelectTrigger className="bg-transparent border-amber-200 focus:border-amber-500 focus:ring-amber-500">
-                  <SelectValue placeholder="Select timezone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pst">Pacific Time (PT)</SelectItem>
-                  <SelectItem value="est">Eastern Time (ET)</SelectItem>
-                  <SelectItem value="utc">UTC</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </SettingsSection>
-
         {/* Save Changes */}
         <div className="flex justify-end gap-4">
           <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50">
-            Cancel
-          </Button>
-          <Button className="bg-amber-600 hover:bg-amber-700 text-white">
-            Save Changes
+            Delete Account
           </Button>
         </div>
       </div>

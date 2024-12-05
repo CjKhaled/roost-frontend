@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   MapPin,
   Calendar as CalendarIcon,
@@ -11,38 +11,69 @@ import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { type Listing } from '../types/listing'
+import { listingsService } from '../services/listing'
+import { useAuth } from '../../../context/AuthContext'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../../components/ui/tooltip'
 
 interface ListingCardProps {
   listing: Listing
   isSelected?: boolean
   onClick?: () => void
+  onFavoriteClick?: (listing: Listing) => void
+  isFavoritesPage?: boolean
 }
 
-const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps): JSX.Element => {
+const ListingCard = ({ listing, isSelected = false, onClick, onFavoriteClick, isFavoritesPage }: ListingCardProps): JSX.Element => {
   const [favorites, setFavorites] = useState(new Set<string>())
   const [hoveredListing, setHoveredListing] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const handleClick = () => {
     navigate(`/listings/${listing.id}`)
   }
 
-  const toggleFavorite = (id: string): void => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev)
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id)
-      } else {
-        newFavorites.add(id)
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        if (!user) return
+        const userFavorites = await listingsService.getUserFavorites()
+        setFavorites(new Set(userFavorites.map(f => f.id)))
+      } catch (error) {
+        console.log('Error loading favorites:', error)
       }
-      return newFavorites
-    })
+    }
+    void loadFavorites()
+  }, [user])
+
+  const toggleFavorite = async (id: string): Promise<void> => {
+    try {
+      await listingsService.toggleFavorite(id)
+      setFavorites(prev => {
+        const newFavorites = new Set(prev)
+        if (newFavorites.has(id)) {
+          newFavorites.delete(id)
+        } else {
+          newFavorites.add(id)
+        }
+        return newFavorites
+      })
+    } catch (error) {
+      console.log('Error toggling favorite:', error)
+    }
   }
 
   const formatDateRange = (from: string, to: string): string => {
     const fromDate = new Date(from)
     const toDate = new Date(to)
-    return `${fromDate.toLocaleDateString('en-US', { month: 'short' })} ${fromDate.getFullYear()} - ${toDate.toLocaleDateString('en-US', { month: 'short' })} ${toDate.getFullYear()}`
+    // Format considering timezone
+    return `${fromDate.toLocaleDateString('en-US', {
+        month: 'short',
+        timeZone: 'UTC'
+      })} ${fromDate.getUTCFullYear()} - ${toDate.toLocaleDateString('en-US', {
+        month: 'short',
+        timeZone: 'UTC'
+      })} ${toDate.getUTCFullYear()}`
   }
 
   const formatAmenityLabel = (amenity: string): string => {
@@ -55,7 +86,9 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
   return (
 
       <Card
+        data-testid="listing-card"
         data-listing-id={listing.id}
+        data-listing-card="true"
         className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-amber-500 shadow-lg transform scale-[1.02]' : 'hover:shadow-lg'}
         ${hoveredListing === listing.id ? 'ring-2 ring-amber-500' : ''
         }`}
@@ -72,28 +105,41 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
           <div className='absolute top-4 right-4 flex gap-2'>
             <Badge className={`
               ${isSelected
-                ? 'bg-amber-600 text-white'
-                : 'bg-white/90 text-amber-900'
+                ? 'bg-amber-600 hover:bg-amber-600 text-white'
+                : 'bg-white/90 hover:bg-white/90 text-amber-900'
               } 
-              font-medium transition-colors
+              font-medium
             `}>
               ${listing.price}/mo
             </Badge>
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                toggleFavorite(listing.id)
-              }}
-              className='p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors'
-            >
-              <Heart
-                className={`h-5 w-5 ${
-                  favorites.has(listing.id)
-                    ? 'fill-red-500 stroke-red-500'
-                    : 'stroke-gray-600'
-                }`}
-              />
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      if (isFavoritesPage && onFavoriteClick) {
+                        onFavoriteClick(listing)
+                      } else if (user) {
+                        void toggleFavorite(listing.id)
+                      }
+                    }}
+                    aria-label='favorite'
+                    className='p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors'
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${
+                        favorites.has(listing.id)
+                          ? 'fill-red-500 stroke-red-500'
+                          : 'stroke-gray-600'
+                      }`}
+                    />
+                  </button>
+                </TooltipTrigger>
+                {!user && <TooltipContent><p>You need to be logged in!</p></TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardHeader>
 
@@ -119,7 +165,7 @@ const ListingCard = ({ listing, isSelected = false, onClick }: ListingCardProps)
               <Bath className='h-4 w-4' />
               {listing.bathCount} bath
             </span>
-            <span className='flex items-center gap-1'>
+            <span className='flex items-center gap-1' data-testid="date-range">
               <CalendarIcon className='h-4 w-4' />
               {formatDateRange(listing.available.from, listing.available.to)}
             </span>
