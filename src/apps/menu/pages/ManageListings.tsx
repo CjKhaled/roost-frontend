@@ -80,14 +80,16 @@ const ManageListings = () => {
       const newListing = await listingsService.createListing(data)
       setListings([...listings, newListing])
       setIsFormOpen(false)
+      return true
     } catch (err) {
       setError('Failed to create listing')
       console.error(err)
+      return false
     }
   }
 
   const handleEditListing = async (data: Partial<Listing>) => {
-    if (!selectedListing) return
+    if (!selectedListing) return false
 
     try {
       setError(null)
@@ -97,9 +99,11 @@ const ManageListings = () => {
       ))
       setIsFormOpen(false)
       setSelectedListing(null)
+      return true
     } catch (err) {
       setError('Failed to update listing')
       console.error(err)
+      return false
     }
   }
 
@@ -134,14 +138,6 @@ const ManageListings = () => {
     return (
       <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50'>
         <div className='text-amber-600'>Loading listings...</div>
-      </div>
-    )
-  }
-
-  if (error !== null) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50'>
-        <div className='text-red-600'>{error}</div>
       </div>
     )
   }
@@ -249,6 +245,7 @@ const ManageListings = () => {
         isOpen={isFormOpen}
         onClose={() => { setIsFormOpen(false) }}
         onSubmit={formMode === 'create' ? handleCreateListing : handleEditListing}
+        error={error}
         initialData={selectedListing}
         mode={formMode}
       />

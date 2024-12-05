@@ -1,3 +1,4 @@
+import type { Conversation } from '../types/conversation'
 import { type APIListing, type Listing } from '../types/listing'
 
 interface ListingsResponse {
@@ -120,6 +121,22 @@ export class ListingsService {
       throw error
     }
   }
+
+  async fetchConversations (user: any): Promise<Conversation[]> {
+    try {
+      const response = await fetch(`${this.API_URL}/users/conversations/${user.id}`, {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        throw new Error('Failed to fetch conversations')
+      }
+      const data = await response.json()
+      return data.conversations
+    } catch (error) {
+      console.error('Error fetching conversations:', error)
+      throw error
+    }
+  };
 
   async getUserByID (listerID: string): Promise<{ firstName: string; lastName: string }> {
     try {
